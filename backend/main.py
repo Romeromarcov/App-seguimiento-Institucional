@@ -55,3 +55,8 @@ if os.path.isdir(frontend_dir):
     @app.get('/empresa.html', include_in_schema=False)
     def empresa_page():
         return FileResponse(os.path.join(frontend_dir, 'empresa.html'))
+
+    @app.get('/cxc-convenios', include_in_schema=False)
+    @app.get('/cxc-convenios.html', include_in_schema=False)
+    def cxc_convenios_page():
+        return FileResponse(os.path.join(frontend_dir, 'cxc-convenios.html'))

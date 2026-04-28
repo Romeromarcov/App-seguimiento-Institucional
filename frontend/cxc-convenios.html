@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CxC - Convenios Institucionales — Lubrikca</title>
+<style>
+  :root {
+    --primary: #667eea; --primary-dark: #5568d3; --success: #28a745;
+    --warning: #ffc107; --danger: #dc3545; --bg: #f0f2f5;
+    --sidebar-w: 220px; --card: #fff; --border: #dee2e6;
+    --text: #212529; --muted: #6c757d;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+
+  /* ── SIDEBAR ── */
+  #sidebar {
+    width: var(--sidebar-w); background: var(--primary-dark); color: #fff;
+    position: fixed; top: 0; left: 0; height: 100vh; overflow-y: auto;
+    display: flex; flex-direction: column; z-index: 100;
+  }
+  #sidebar .logo { padding: 20px 16px; font-size: 1.1rem; font-weight: 700;
+    border-bottom: 1px solid rgba(255,255,255,0.15); }
+  #sidebar .logo small { display: block; font-size: .7rem; opacity: .7; }
+  #sidebar nav a {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; color: rgba(255,255,255,.85); text-decoration: none;
+    font-size: .88rem; transition: background .15s;
+  }
+  #sidebar nav a:hover, #sidebar nav a.active { background: rgba(255,255,255,.15); color: #fff; }
+  #sidebar nav a .ico { font-size: 1.1rem; width: 20px; text-align: center; }
+  #sidebar .user-info { margin-top: auto; padding: 14px 16px; font-size: .8rem;
+    border-top: 1px solid rgba(255,255,255,.15); }
+
+  /* ── MAIN ── */
+  #main { margin-left: var(--sidebar-w); flex: 1; padding: 24px; }
+  #topbar { display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px; }
+  #topbar h1 { font-size: 1.4rem; }
+
+  /* ── VIEWS ── */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ── CARDS ── */
+  .cards-row { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 16px; margin-bottom: 24px; }
+  .card { background: var(--card); border-radius: 10px; padding: 18px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .card .num { font-size: 2rem; font-weight: 700; color: var(--primary); }
+  .card .lbl { font-size: .8rem; color: var(--muted); margin-top: 4px; }
+
+  /* ── TABLES ── */
+  .table-wrap { background: var(--card); border-radius: 10px; overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; }
+  table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+  th { background: var(--primary); color: #fff; padding: 10px 12px; text-align: left; white-space: nowrap; }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--border); }
+  tr:hover td { background: #f8f9fa; }
+
+  /* ── BADGES ── */
+  .badge { padding: 2px 8px; border-radius: 12px; font-size: .75rem; font-weight: 600; }
+  .b-pendiente { background: #fff3cd; color: #856404; }
+  .b-pagada { background: #d1e7dd; color: #0a3622; }
+  .b-vencida { background: #f8d7da; color: #842029; }
+  .b-parcial { background: #cff4fc; color: #0c5460; }
+  .b-enviado { background: #d1e7dd; color: #0a3622; }
+  .b-procesando { background: #fff3cd; color: #856404; }
+
+  /* ── FORMS ── */
+  .form-section { background: var(--card); border-radius: 10px; padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; }
+  .form-section h3 { margin-bottom: 14px; font-size: 1rem; color: var(--primary); }
+  .form-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .form-group { flex: 1; min-width: 160px; }
+  .form-group label { display: block; font-size: .8rem; color: var(--muted); margin-bottom: 4px; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 8px 10px; border: 1px solid var(--border);
+    border-radius: 6px; font-size: .88rem; background: #fff;
+  }
+  .form-group input:focus, .form-group select:focus {
+    outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(102,126,234,.2);
+  }
+
+  /* ── BUTTONS ── */
+  .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer;
+    font-size: .88rem; font-weight: 600; transition: opacity .15s; }
+  .btn:hover { opacity: .85; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-warning { background: var(--warning); color: #212529; }
+  .btn-sm { padding: 4px 10px; font-size: .78rem; }
+
+  /* ── MODALS ── */
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.5);
+    display: none; align-items: center; justify-content: center; z-index: 500; }
+  .modal-bg.open { display: flex; }
+  .modal { background: #fff; border-radius: 12px; padding: 24px;
+    max-width: 600px; width: 95%; max-height: 90vh; overflow-y: auto; }
+  .modal h3 { margin-bottom: 16px; color: var(--primary); }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+  /* ── FILTERS ── */
+  .filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: flex-end; }
+
+  /* ── ALERTS ── */
+  .alert { padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; font-size: .88rem; }
+  .alert-success { background: #d1e7dd; color: #0a3622; }
+  .alert-danger { background: #f8d7da; color: #842029; }
+  .alert-info { background: #cff4fc; color: #0c5460; }
+  .alert-warning { background: #fff3cd; color: #856404; }
+
+  @media (max-width: 768px) {
+    #sidebar { transform: translateX(-100%); transition: transform .3s; }
+    #sidebar.open { transform: translateX(0); }
+    #main { margin-left: 0; padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="logo">CxC Convenios<small>Lubrikca</small></div>
+  <nav id="nav">
+    <a href="#" class="active" onclick="showView('dashboard')" data-roles="admin,gerente,financiero">
+      <span class="ico">📊</span> Dashboard
+    </a>
+    <a href="#" onclick="showView('facturas')" data-roles="admin,gerente,financiero">
+      <span class="ico">📄</span> Facturas Factoring
+    </a>
+    <a href="#" onclick="showView('pagos-clientes')" data-roles="admin,gerente,financiero,vendedor">
+      <span class="ico">💳</span> Pagos de Clientes
+    </a>
+    <a href="#" onclick="showView('notas-credito')" data-roles="admin,gerente,financiero">
+      <span class="ico">🧾</span> Notas de Crédito
+    </a>
+    <a href="#" onclick="showView('ordenes-venta')" data-roles="admin,gerente">
+      <span class="ico">📋</span> Órdenes de Venta
+    </a>
+    <a href="#" onclick="showView('pedidos')" data-roles="admin,gerente,vendedor">
+      <span class="ico">📦</span> Pedidos
+    </a>
+    <a href="#" onclick="showView('cotizaciones')" data-roles="admin,gerente">
+      <span class="ico">📨</span> Cotizaciones a Odoo
+    </a>
+    <a href="#" onclick="showView('reportes')" data-roles="admin,gerente">
+      <span class="ico">📈</span> Reportes
+    </a>
+  </nav>
+  <div class="user-info">
+    <div id="user-name" style="font-weight:600">Usuario Demo</div>
+    <div id="user-role" style="opacity:.7">Administrador</div>
+    <a href="javascript:location.href='/';" style="color:rgba(255,255,255,.6);font-size:.78rem">← Volver</a>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="topbar">
+    <h1 id="view-title">Dashboard</h1>
+  </div>
+
+  <!-- ── DASHBOARD ── -->
+  <div id="view-dashboard" class="view active">
+    <div class="cards-row" id="dashboard-cards">
+      <div class="card">
+        <div class="num" id="d-facturas-compradas">0</div>
+        <div class="lbl">Facturas Compradas</div>
+      </div>
+      <div class="card">
+        <div class="num" id="d-saldo-pendiente">$0</div>
+        <div class="lbl">Saldo Pendiente</div>
+      </div>
+      <div class="card">
+        <div class="num" id="d-pagos-recibidos">0</div>
+        <div class="lbl">Pagos Recibidos</div>
+      </div>
+      <div class="card">
+        <div class="num" id="d-nc-emitidas">0</div>
+        <div class="lbl">Notas de Crédito</div>
+      </div>
+      <div class="card">
+        <div class="num" id="d-pedidos-activos">0</div>
+        <div class="lbl">Pedidos Activos</div>
+      </div>
+      <div class="card">
+        <div class="num" id="d-cotizaciones-pendientes">0</div>
+        <div class="lbl">Cotizaciones Pendientes</div>
+      </div>
+    </div>
+    <div class="alert alert-info">Sistema de Factoring - Lubrikca compra facturas a talleres y gestiona cobranza a clientes finales</div>
+  </div>
+
+  <!-- ── FACTURAS FACTORING ── -->
+  <div id="view-facturas" class="view">
+    <div class="filters">
+      <div class="form-group" style="min-width: 200px;">
+        <label>Buscar factura</label>
+        <input id="ff-buscar" placeholder="FAC-2026-..." oninput="filtrarFacturas()">
+      </div>
+      <div class="form-group" style="min-width: 120px;">
+        <label>Estado</label>
+        <select id="ff-estado" onchange="filtrarFacturas()">
+          <option value="">Todos</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="parcial">Pago Parcial</option>
+          <option value="pagada">Pagada</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="loadFacturas()">↺ Actualizar</button>
+    </div>
+    <div class="table-wrap">
+      <table><thead><tr>
+        <th>Factura</th><th>Taller</th><th>Cliente</th><th>Monto</th><th>Pagado</th><th>Saldo</th><th>Fecha</th><th>Vencimiento</th><th>Estado</th><th>Acciones</th>
+      </tr></thead>
+      <tbody id="facturas-tabla"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── PAGOS DE CLIENTES ── -->
+  <div id="view-pagos-clientes" class="view">
+    <div style="margin-bottom: 20px;">
+      <button class="btn btn-success" onclick="openModal('modal-nuevo-pago')">+ Registrar Pago</button>
+    </div>
+    <div class="filters">
+      <div class="form-group" style="min-width: 200px;">
+        <label>Buscar cliente</label>
+        <input id="fp-buscar" placeholder="Nombre o RIF..." oninput="filtrarPagos()">
+      </div>
+      <button class="btn btn-primary" onclick="loadPagos()">↺ Actualizar</button>
+    </div>
+    <div class="table-wrap">
+      <table><thead><tr>
+        <th>Fecha</th><th>Cliente</th><th>Factura</th><th>Monto</th><th>Método</th><th>Referencia</th><th>Estado</th><th>Acciones</th>
+      </tr></thead>
+      <tbody id="pagos-tabla"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── NOTAS DE CRÉDITO ── -->
+  <div id="view-notas-credito" class="view">
+    <div style="margin-bottom: 20px;">
+      <button class="btn btn-success" onclick="openModal('modal-nueva-nc')">+ Generar Nota de Crédito</button>
+    </div>
+    <div class="filters">
+      <div class="form-group" style="min-width: 200px;">
+        <label>Buscar nota</label>
+        <input id="fn-buscar" placeholder="NC-2026-..." oninput="filtrarNotas()">
+      </div>
+      <button class="btn btn-primary" onclick="loadNotas()">↺ Actualizar</button>
+    </div>
+    <div class="table-wrap">
+      <table><thead><tr>
+        <th>Nota de Crédito</th><th>Taller</th><th>Orden de Venta</th><th>Monto</th><th>Concepto</th><th>Fecha</th><th>Estado</th><th>Acciones</th>
+      </tr></thead>
+      <tbody id="notas-tabla"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── ÓRDENES DE VENTA ── -->
+  <div id="view-ordenes-venta" class="view">
+    <div class="filters">
+      <div class="form-group" style="min-width: 200px;">
+        <label>Buscar orden</label>
+        <input id="fo-buscar" placeholder="OV-2026-..." oninput="filtrarOrdenes()">
+      </div>
+      <div class="form-group" style="min-width: 120px;">
+        <label>Tipo Taller</label>
+        <select id="fo-taller" onchange="filtrarOrdenes()">
+          <option value="">Todos</option>
+          <option value="taller-001">Lubrikca Premium</option>
+          <option value="taller-002">Auto Servicio Total</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="loadOrdenes()">↺ Actualizar</button>
+    </div>
+    <div class="table-wrap">
+      <table><thead><tr>
+        <th>Orden</th><th>Taller</th><th>Cliente</th><th>Subtotal</th><th>Impuestos</th><th>Total</th><th>Fecha</th><th>Estado</th><th>Acciones</th>
+      </tr></thead>
+      <tbody id="ordenes-tabla"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── PEDIDOS ── -->
+  <div id="view-pedidos" class="view">
+    <div style="margin-bottom: 20px;">
+      <button class="btn btn-success" onclick="openModal('modal-nuevo-pedido')">+ Nuevo Pedido</button>
+    </div>
+    <div class="filters">
+      <div class="form-group" style="min-width: 200px;">
+        <label>Buscar pedido</label>
+        <input id="fpe-buscar" placeholder="PED-2026-..." oninput="filtrarPedidos()">
+      </div>
+      <div class="form-group" style="min-width: 120px;">
+        <label>Solicitante</label>
+        <select id="fpe-solicitante" onchange="filtrarPedidos()">
+          <option value="">Todos</option>
+          <option value="taller">Taller</option>
+          <option value="empresa">Empresa</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="loadPedidos()">↺ Actualizar</button>
+    </div>
+    <div class="table-wrap">
+      <table><thead><tr>
+        <th>Pedido</th><th>Solicitante</th><th>Artículos</th><th>Monto Estimado</th><th>Fecha Solicitud</th><th>Estado</th><th>Acciones</th>
+      </tr></thead>
+      <tbody id="pedidos-tabla"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── COTIZACIONES A ODOO ── -->
+  <div id="view-cotizaciones" class="view">
+    <div style="margin-bottom: 20px;">
+      <button class="btn btn-success" onclick="openModal('modal-enviar-cotizacion')">+ Enviar Cotización a Odoo</button>
+    </div>
+    <div class="filters">
+      <div class="form-group" style="min-width: 200px;">
+        <label>Buscar cotización</label>
+        <input id="fc-buscar" placeholder="COT-2026-..." oninput="filtrarCotizaciones()">
+      </div>
+      <button class="btn btn-primary" onclick="loadCotizaciones()">↺ Actualizar</button>
+    </div>
+    <div class="table-wrap">
+      <table><thead><tr>
+        <th>Cotización</th><th>Pedido</th><th>Solicitante</th><th>Total</th><th>Fecha Envío</th><th>Estado Odoo</th><th>Acciones</th>
+      </tr></thead>
+      <tbody id="cotizaciones-tabla"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── REPORTES ── -->
+  <div id="view-reportes" class="view">
+    <div class="form-section">
+      <h3>Reportes CxC - Convenios Institucionales</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Período</label>
+          <select id="rep-periodo">
+            <option value="mes">Este Mes</option>
+            <option value="trimestre">Este Trimestre</option>
+            <option value="año">Este Año</option>
+            <option value="custom">Personalizado</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Taller</label>
+          <select id="rep-taller">
+            <option value="">Todos los Talleres</option>
+            <option value="taller-001">Lubrikca Premium</option>
+            <option value="taller-002">Auto Servicio Total</option>
+            <option value="empresa-001">Transportes Global</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" style="align-self: flex-end;" onclick="generarReporte()">Generar</button>
+      </div>
+    </div>
+    <div id="reporte-resultado" style="margin-top: 20px;"></div>
+  </div>
+</div>
+
+<!-- MODAL: Nuevo Pago -->
+<div id="modal-nuevo-pago" class="modal-bg">
+  <div class="modal">
+    <h3>Registrar Pago de Cliente</h3>
+    <div class="form-section">
+      <div class="form-group">
+        <label>Factura (Seleccionar)</label>
+        <select id="np-factura" onchange="updateFacturaData()">
+          <option value="">-- Seleccionar factura --</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Cliente</label>
+          <input type="text" id="np-cliente" readonly>
+        </div>
+        <div class="form-group">
+          <label>Saldo Pendiente</label>
+          <input type="text" id="np-saldo" readonly>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Monto a Pagar ($)</label>
+          <input type="number" id="np-monto" placeholder="0.00" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Método</label>
+          <select id="np-metodo">
+            <option value="transferencia">Transferencia</option>
+            <option value="cheque">Cheque</option>
+            <option value="efectivo">Efectivo</option>
+            <option value="tarjeta">Tarjeta</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Referencia</label>
+        <input type="text" id="np-referencia" placeholder="TRF-2026-001 o CHQ-123">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-warning" onclick="closeModal('modal-nuevo-pago')">Cancelar</button>
+      <button class="btn btn-success" onclick="guardarPago()">Registrar Pago</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Nueva Nota de Crédito -->
+<div id="modal-nueva-nc" class="modal-bg">
+  <div class="modal">
+    <h3>Generar Nota de Crédito</h3>
+    <div class="form-section">
+      <div class="form-group">
+        <label>Orden de Venta</label>
+        <select id="nc-orden" onchange="updateOrdenData()">
+          <option value="">-- Seleccionar orden --</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Taller</label>
+          <input type="text" id="nc-taller" readonly>
+        </div>
+        <div class="form-group">
+          <label>Monto Orden</label>
+          <input type="text" id="nc-monto-orden" readonly>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Monto NC ($)</label>
+          <input type="number" id="nc-monto" placeholder="0.00" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Concepto</label>
+          <select id="nc-concepto">
+            <option value="descuento">Descuento</option>
+            <option value="devolucion">Devolución</option>
+            <option value="ajuste">Ajuste</option>
+            <option value="promocion">Promoción</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Descripción</label>
+        <textarea id="nc-descripcion" rows="3" placeholder="Detalles de la nota de crédito"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-warning" onclick="closeModal('modal-nueva-nc')">Cancelar</button>
+      <button class="btn btn-success" onclick="guardarNC()">Generar NC</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Nuevo Pedido -->
+<div id="modal-nuevo-pedido" class="modal-bg">
+  <div class="modal">
+    <h3>Crear Nuevo Pedido</h3>
+    <div class="form-section">
+      <div class="form-group">
+        <label>Solicitante</label>
+        <select id="ped-solicitante" onchange="updateSolicitanteData()">
+          <option value="">-- Seleccionar --</option>
+          <option value="taller-001">Lubrikca Premium</option>
+          <option value="taller-002">Auto Servicio Total</option>
+          <option value="empresa-001">Transportes Global</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Artículo</label>
+          <select id="ped-articulo">
+            <option value="">-- Seleccionar artículo --</option>
+            <option value="aceite-mobil">Aceite Mobil 5W-30</option>
+            <option value="filtro-aire">Filtro de Aire</option>
+            <option value="pastillas-freno">Pastillas de Freno</option>
+            <option value="bujias">Bujías NGK</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Cantidad</label>
+          <input type="number" id="ped-cantidad" placeholder="1" min="1">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-warning" onclick="closeModal('modal-nuevo-pedido')">Cancelar</button>
+      <button class="btn btn-success" onclick="guardarPedido()">Crear Pedido</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Enviar Cotización -->
+<div id="modal-enviar-cotizacion" class="modal-bg">
+  <div class="modal">
+    <h3>Enviar Cotización a Odoo</h3>
+    <div class="form-section">
+      <div class="form-group">
+        <label>Pedido a Cotizar</label>
+        <select id="cot-pedido">
+          <option value="">-- Seleccionar pedido --</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Notas Adicionales</label>
+        <textarea id="cot-notas" rows="3" placeholder="Notas para la cotización en Odoo..."></textarea>
+      </div>
+      <div class="alert alert-info">La cotización será enviada a Odoo como presupuesto</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-warning" onclick="closeModal('modal-enviar-cotizacion')">Cancelar</button>
+      <button class="btn btn-success" onclick="enviarCotizacion()">Enviar a Odoo</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Mock Data
+  const mockData = {
+    facturas: [
+      { id: 'FAC-2026-001', taller: 'Lubrikca Premium', cliente: 'Juan García', monto: 1500, pagado: 500, fecha: '2026-04-15', vencimiento: '2026-05-15', estado: 'parcial' },
+      { id: 'FAC-2026-002', taller: 'Auto Servicio', cliente: 'María López', monto: 2000, pagado: 0, fecha: '2026-04-20', vencimiento: '2026-05-20', estado: 'pendiente' },
+      { id: 'FAC-2026-003', taller: 'Lubrikca Premium', cliente: 'Carlos Rodríguez', monto: 850, pagado: 850, fecha: '2026-04-10', vencimiento: '2026-05-10', estado: 'pagada' },
+      { id: 'FAC-2026-004', taller: 'Auto Servicio', cliente: 'Ana Martínez', monto: 3200, pagado: 1200, fecha: '2026-04-18', vencimiento: '2026-05-18', estado: 'parcial' },
+      { id: 'FAC-2026-005', taller: 'Lubrikca Premium', cliente: 'Roberto Pérez', monto: 1800, pagado: 0, fecha: '2026-04-25', vencimiento: '2026-05-25', estado: 'pendiente' }
+    ],
+    pagos: [
+      { fecha: '2026-04-25', cliente: 'Juan García', factura: 'FAC-2026-001', monto: 500, metodo: 'Transferencia', referencia: 'TRF-2026-001', estado: 'Confirmado' },
+      { fecha: '2026-04-24', cliente: 'Ana Martínez', factura: 'FAC-2026-004', monto: 1200, metodo: 'Cheque', referencia: 'CHQ-5678', estado: 'Confirmado' },
+      { fecha: '2026-04-22', cliente: 'Carlos Rodríguez', factura: 'FAC-2026-003', monto: 850, metodo: 'Transferencia', referencia: 'TRF-2026-002', estado: 'Confirmado' }
+    ],
+    notas: [
+      { id: 'NC-2026-001', taller: 'Lubrikca Premium', orden: 'OV-2026-001', monto: 300, concepto: 'Descuento por Volumen', fecha: '2026-04-20', estado: 'Emitida' },
+      { id: 'NC-2026-002', taller: 'Auto Servicio', orden: 'OV-2026-002', monto: 200, concepto: 'Devolución', fecha: '2026-04-18', estado: 'Emitida' },
+      { id: 'NC-2026-003', taller: 'Lubrikca Premium', orden: 'OV-2026-003', monto: 150, concepto: 'Ajuste de Precio', fecha: '2026-04-15', estado: 'Emitida' }
+    ],
+    ordenes: [
+      { id: 'OV-2026-001', taller: 'Lubrikca Premium', cliente: 'Juan García', subtotal: 1200, impuestos: 240, total: 1440, fecha: '2026-04-15', estado: 'Facturada' },
+      { id: 'OV-2026-002', taller: 'Auto Servicio', cliente: 'María López', subtotal: 1600, impuestos: 320, total: 1920, fecha: '2026-04-20', estado: 'Facturada' },
+      { id: 'OV-2026-003', taller: 'Lubrikca Premium', cliente: 'Roberto Pérez', subtotal: 1400, impuestos: 280, total: 1680, fecha: '2026-04-25', estado: 'Facturada' }
+    ],
+    pedidos: [
+      { id: 'PED-2026-001', solicitante: 'Lubrikca Premium', articulos: 'Aceite Mobil (12 unidades)', monto: 450, fecha: '2026-04-24', estado: 'Pendiente' },
+      { id: 'PED-2026-002', solicitante: 'Transportes Global', articulos: 'Filtros Aire (20 unidades)', monto: 280, fecha: '2026-04-22', estado: 'Procesando' },
+      { id: 'PED-2026-003', solicitante: 'Auto Servicio', articulos: 'Pastillas Freno (8 unidades)', monto: 640, fecha: '2026-04-20', estado: 'Enviado' }
+    ],
+    cotizaciones: [
+      { id: 'COT-2026-001', pedido: 'PED-2026-001', solicitante: 'Lubrikca Premium', total: 450, fechaEnvio: '2026-04-25', estadoOdoo: 'Enviada' },
+      { id: 'COT-2026-002', pedido: 'PED-2026-002', solicitante: 'Transportes Global', total: 280, fechaEnvio: '2026-04-23', estadoOdoo: 'Aceptada' }
+    ]
+  };
+
+  // Funciones principales
+  function showView(viewName) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + viewName).classList.add('active');
+
+    const titles = {
+      'dashboard': 'Dashboard',
+      'facturas': 'Facturas de Factoring',
+      'pagos-clientes': 'Pagos de Clientes',
+      'notas-credito': 'Notas de Crédito',
+      'ordenes-venta': 'Órdenes de Venta',
+      'pedidos': 'Pedidos',
+      'cotizaciones': 'Cotizaciones a Odoo',
+      'reportes': 'Reportes'
+    };
+    document.getElementById('view-title').textContent = titles[viewName] || viewName;
+
+    document.querySelectorAll('#nav a').forEach(a => a.classList.remove('active'));
+    event.target.closest('a').classList.add('active');
+
+    // Cargar datos según vista
+    if(viewName === 'dashboard') loadDashboard();
+    else if(viewName === 'facturas') loadFacturas();
+    else if(viewName === 'pagos-clientes') loadPagos();
+    else if(viewName === 'notas-credito') loadNotas();
+    else if(viewName === 'ordenes-venta') loadOrdenes();
+    else if(viewName === 'pedidos') loadPedidos();
+    else if(viewName === 'cotizaciones') loadCotizaciones();
+  }
+
+  function loadDashboard() {
+    const totalFacturas = mockData.facturas.length;
+    const saldoPendiente = mockData.facturas.reduce((sum, f) => sum + (f.monto - f.pagado), 0);
+    const pagosRecibidos = mockData.pagos.length;
+    const ncEmitidas = mockData.notas.length;
+    const pedidosActivos = mockData.pedidos.filter(p => p.estado !== 'Enviado').length;
+    const cotizacionesPendientes = mockData.cotizaciones.filter(c => c.estadoOdoo === 'Enviada').length;
+
+    document.getElementById('d-facturas-compradas').textContent = totalFacturas;
+    document.getElementById('d-saldo-pendiente').textContent = '$' + saldoPendiente.toLocaleString();
+    document.getElementById('d-pagos-recibidos').textContent = pagosRecibidos;
+    document.getElementById('d-nc-emitidas').textContent = ncEmitidas;
+    document.getElementById('d-pedidos-activos').textContent = pedidosActivos;
+    document.getElementById('d-cotizaciones-pendientes').textContent = cotizacionesPendientes;
+  }
+
+  function loadFacturas() {
+    const tabla = document.getElementById('facturas-tabla');
+    tabla.innerHTML = mockData.facturas.map(f => `
+      <tr>
+        <td>${f.id}</td>
+        <td>${f.taller}</td>
+        <td>${f.cliente}</td>
+        <td>$${f.monto.toLocaleString()}</td>
+        <td>$${f.pagado.toLocaleString()}</td>
+        <td>$${(f.monto - f.pagado).toLocaleString()}</td>
+        <td>${f.fecha}</td>
+        <td>${f.vencimiento}</td>
+        <td><span class="badge b-${f.estado}">${f.estado.toUpperCase()}</span></td>
+        <td><button class="btn btn-sm btn-primary" onclick="showFacturaDetail('${f.id}')">Ver</button></td>
+      </tr>
+    `).join('');
+  }
+
+  function loadPagos() {
+    const tabla = document.getElementById('pagos-tabla');
+    tabla.innerHTML = mockData.pagos.map(p => `
+      <tr>
+        <td>${p.fecha}</td>
+        <td>${p.cliente}</td>
+        <td>${p.factura}</td>
+        <td>$${p.monto.toLocaleString()}</td>
+        <td>${p.metodo}</td>
+        <td>${p.referencia}</td>
+        <td><span class="badge b-pagada">${p.estado}</span></td>
+        <td><button class="btn btn-sm btn-primary" onclick="alert('Pago confirmado')">Confirmar</button></td>
+      </tr>
+    `).join('');
+
+    // Llenar select de facturas en modal
+    const select = document.getElementById('np-factura');
+    select.innerHTML = '<option value="">-- Seleccionar factura --</option>' +
+      mockData.facturas.map(f => `<option value="${f.id}">${f.id} - ${f.cliente}</option>`).join('');
+  }
+
+  function loadNotas() {
+    const tabla = document.getElementById('notas-tabla');
+    tabla.innerHTML = mockData.notas.map(n => `
+      <tr>
+        <td>${n.id}</td>
+        <td>${n.taller}</td>
+        <td>${n.orden}</td>
+        <td>$${n.monto.toLocaleString()}</td>
+        <td>${n.concepto}</td>
+        <td>${n.fecha}</td>
+        <td><span class="badge b-enviado">${n.estado}</span></td>
+        <td><button class="btn btn-sm btn-primary" onclick="alert('NC: ${n.id}')">Ver</button></td>
+      </tr>
+    `).join('');
+
+    // Llenar select de órdenes en modal
+    const select = document.getElementById('nc-orden');
+    select.innerHTML = '<option value="">-- Seleccionar orden --</option>' +
+      mockData.ordenes.map(o => `<option value="${o.id}">${o.id} - ${o.cliente}</option>`).join('');
+  }
+
+  function loadOrdenes() {
+    const tabla = document.getElementById('ordenes-tabla');
+    tabla.innerHTML = mockData.ordenes.map(o => `
+      <tr>
+        <td>${o.id}</td>
+        <td>${o.taller}</td>
+        <td>${o.cliente}</td>
+        <td>$${o.subtotal.toLocaleString()}</td>
+        <td>$${o.impuestos.toLocaleString()}</td>
+        <td>$${o.total.toLocaleString()}</td>
+        <td>${o.fecha}</td>
+        <td><span class="badge b-confirmado">${o.estado}</span></td>
+        <td><button class="btn btn-sm btn-primary" onclick="alert('Orden: ${o.id}')">Ver</button></td>
+      </tr>
+    `).join('');
+  }
+
+  function loadPedidos() {
+    const tabla = document.getElementById('pedidos-tabla');
+    tabla.innerHTML = mockData.pedidos.map(p => `
+      <tr>
+        <td>${p.id}</td>
+        <td>${p.solicitante}</td>
+        <td>${p.articulos}</td>
+        <td>$${p.monto.toLocaleString()}</td>
+        <td>${p.fecha}</td>
+        <td><span class="badge b-${p.estado.toLowerCase()}">${p.estado}</span></td>
+        <td><button class="btn btn-sm btn-primary" onclick="openModal('modal-enviar-cotizacion')">Cotizar</button></td>
+      </tr>
+    `).join('');
+  }
+
+  function loadCotizaciones() {
+    const tabla = document.getElementById('cotizaciones-tabla');
+    tabla.innerHTML = mockData.cotizaciones.map(c => `
+      <tr>
+        <td>${c.id}</td>
+        <td>${c.pedido}</td>
+        <td>${c.solicitante}</td>
+        <td>$${c.total.toLocaleString()}</td>
+        <td>${c.fechaEnvio}</td>
+        <td><span class="badge b-${c.estadoOdoo.toLowerCase()}">${c.estadoOdoo}</span></td>
+        <td><button class="btn btn-sm btn-primary" onclick="alert('Cotización: ${c.id}')">Detalles</button></td>
+      </tr>
+    `).join('');
+  }
+
+  // Funciones auxiliares
+  function openModal(modalId) {
+    document.getElementById(modalId).classList.add('open');
+  }
+
+  function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('open');
+  }
+
+  function filtrarFacturas() {
+    const buscar = document.getElementById('ff-buscar').value.toLowerCase();
+    const estado = document.getElementById('ff-estado').value;
+    const filas = document.querySelectorAll('#facturas-tabla tr');
+    filas.forEach(row => {
+      const id = row.cells[0].textContent.toLowerCase();
+      const s = row.cells[8].textContent.toLowerCase();
+      const cumple = (!buscar || id.includes(buscar)) && (!estado || s.includes(estado));
+      row.style.display = cumple ? '' : 'none';
+    });
+  }
+
+  function filtrarPagos() {
+    const buscar = document.getElementById('fp-buscar').value.toLowerCase();
+    const filas = document.querySelectorAll('#pagos-tabla tr');
+    filas.forEach(row => {
+      const cliente = row.cells[1].textContent.toLowerCase();
+      const cumple = !buscar || cliente.includes(buscar);
+      row.style.display = cumple ? '' : 'none';
+    });
+  }
+
+  function filtrarNotas() {
+    const buscar = document.getElementById('fn-buscar').value.toLowerCase();
+    const filas = document.querySelectorAll('#notas-tabla tr');
+    filas.forEach(row => {
+      const id = row.cells[0].textContent.toLowerCase();
+      const cumple = !buscar || id.includes(buscar);
+      row.style.display = cumple ? '' : 'none';
+    });
+  }
+
+  function filtrarOrdenes() {
+    const buscar = document.getElementById('fo-buscar').value.toLowerCase();
+    const taller = document.getElementById('fo-taller').value.toLowerCase();
+    const filas = document.querySelectorAll('#ordenes-tabla tr');
+    filas.forEach(row => {
+      const id = row.cells[0].textContent.toLowerCase();
+      const t = row.cells[1].textContent.toLowerCase();
+      const cumple = (!buscar || id.includes(buscar)) && (!taller || t.includes(taller));
+      row.style.display = cumple ? '' : 'none';
+    });
+  }
+
+  function filtrarPedidos() {
+    const buscar = document.getElementById('fpe-buscar').value.toLowerCase();
+    const solicitante = document.getElementById('fpe-solicitante').value.toLowerCase();
+    const filas = document.querySelectorAll('#pedidos-tabla tr');
+    filas.forEach(row => {
+      const id = row.cells[0].textContent.toLowerCase();
+      const s = row.cells[1].textContent.toLowerCase();
+      const cumple = (!buscar || id.includes(buscar)) && (!solicitante || s.includes(solicitante));
+      row.style.display = cumple ? '' : 'none';
+    });
+  }
+
+  function filtrarCotizaciones() {
+    const buscar = document.getElementById('fc-buscar').value.toLowerCase();
+    const filas = document.querySelectorAll('#cotizaciones-tabla tr');
+    filas.forEach(row => {
+      const id = row.cells[0].textContent.toLowerCase();
+      const cumple = !buscar || id.includes(buscar);
+      row.style.display = cumple ? '' : 'none';
+    });
+  }
+
+  function updateFacturaData() {
+    const select = document.getElementById('np-factura').value;
+    const factura = mockData.facturas.find(f => f.id === select);
+    if(factura) {
+      document.getElementById('np-cliente').value = factura.cliente;
+      document.getElementById('np-saldo').value = '$' + (factura.monto - factura.pagado).toLocaleString();
+    }
+  }
+
+  function updateOrdenData() {
+    const select = document.getElementById('nc-orden').value;
+    const orden = mockData.ordenes.find(o => o.id === select);
+    if(orden) {
+      document.getElementById('nc-taller').value = orden.taller;
+      document.getElementById('nc-monto-orden').value = '$' + orden.total.toLocaleString();
+    }
+  }
+
+  function updateSolicitanteData() {
+    const select = document.getElementById('ped-solicitante').value;
+    // Datos del solicitante se pueden cargar aquí si es necesario
+  }
+
+  function guardarPago() {
+    const monto = document.getElementById('np-monto').value;
+    if(!monto) {
+      alert('Ingresa el monto del pago');
+      return;
+    }
+    alert('✓ Pago registrado correctamente por $' + monto);
+    closeModal('modal-nuevo-pago');
+    loadPagos();
+    loadDashboard();
+  }
+
+  function guardarNC() {
+    const monto = document.getElementById('nc-monto').value;
+    if(!monto) {
+      alert('Ingresa el monto de la nota de crédito');
+      return;
+    }
+    alert('✓ Nota de Crédito generada por $' + monto);
+    closeModal('modal-nueva-nc');
+    loadNotas();
+    loadDashboard();
+  }
+
+  function guardarPedido() {
+    const articulo = document.getElementById('ped-articulo').value;
+    const cantidad = document.getElementById('ped-cantidad').value;
+    if(!articulo || !cantidad) {
+      alert('Selecciona artículo y cantidad');
+      return;
+    }
+    alert('✓ Pedido creado: ' + cantidad + 'x ' + articulo);
+    closeModal('modal-nuevo-pedido');
+    loadPedidos();
+  }
+
+  function enviarCotizacion() {
+    const pedido = document.getElementById('cot-pedido').value;
+    if(!pedido) {
+      alert('Selecciona un pedido');
+      return;
+    }
+    alert('✓ Cotización enviada a Odoo');
+    closeModal('modal-enviar-cotizacion');
+    loadCotizaciones();
+  }
+
+  function generarReporte() {
+    const periodo = document.getElementById('rep-periodo').value;
+    const taller = document.getElementById('rep-taller').value;
+    const html = `
+      <div class="table-wrap">
+        <table><thead><tr>
+          <th>Métrica</th><th>Valor</th>
+        </tr></thead>
+        <tbody>
+          <tr><td>Facturas Compradas</td><td>${mockData.facturas.length}</td></tr>
+          <tr><td>Saldo Total</td><td>$${mockData.facturas.reduce((sum, f) => sum + (f.monto - f.pagado), 0).toLocaleString()}</td></tr>
+          <tr><td>Pagos Recibidos</td><td>${mockData.pagos.length}</td></tr>
+          <tr><td>Monto Pagado</td><td>$${mockData.pagos.reduce((sum, p) => sum + p.monto, 0).toLocaleString()}</td></tr>
+          <tr><td>Notas de Crédito</td><td>${mockData.notas.length}</td></tr>
+        </tbody>
+        </table>
+      </div>
+    `;
+    document.getElementById('reporte-resultado').innerHTML = html;
+  }
+
+  function showFacturaDetail(id) {
+    const factura = mockData.facturas.find(f => f.id === id);
+    if(factura) {
+      alert('Factura: ' + factura.id + '\nCliente: ' + factura.cliente + '\nMonto: $' + factura.monto);
+    }
+  }
+
+  // Inicializar
+  window.onload = () => {
+    loadDashboard();
+  };
+</script>
+</body>
+</html>
