@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lubrikca - App del Cliente</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        header p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 20px;
+            max-height: calc(100vh - 150px);
+            overflow-y: auto;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+            animation: slideIn 0.3s ease-in;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            transform: scale(1.02);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-small {
+            width: auto;
+            padding: 8px 16px;
+            font-size: 12px;
+            display: inline-block;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 10px 15px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: #666;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            margin: 0;
+            width: auto;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #f9f9f9;
+        }
+
+        .card h3 {
+            color: #333;
+            font-size: 15px;
+            margin-bottom: 10px;
+        }
+
+        .card-info {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-pendiente {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-confirmada {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-en_proceso {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-completada {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .qr-code {
+            text-align: center;
+            padding: 20px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stat {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .success-checkmark {
+            text-align: center;
+            font-size: 48px;
+            margin: 20px 0;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-around;
+            padding: 15px;
+            background: #f5f5f5;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        nav button {
+            background: none;
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 12px;
+            color: #666;
+            width: auto;
+            margin: 0;
+        }
+
+        nav button.active {
+            color: #667eea;
+        }
+
+        .icon {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        .vehicle-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .vehicle-item {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .vehicle-item:hover {
+            border-color: #667eea;
+            background: #f9f9f9;
+        }
+
+        .vehicle-item.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .taller-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .taller-item {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .taller-item:hover {
+            border-color: #667eea;
+            background: #f9f9f9;
+        }
+
+        .taller-item.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .taller-item h4 {
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .taller-info {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 3px;
+        }
+
+        .stars {
+            color: #ffc107;
+            font-size: 12px;
+        }
+
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .timeline-item {
+            padding: 15px;
+            border-left: 3px solid #e0e0e0;
+            margin-left: 10px;
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -9px;
+            top: 0;
+            width: 12px;
+            height: 12px;
+            background: white;
+            border: 3px solid #667eea;
+            border-radius: 50%;
+        }
+
+        .timeline-item.completed::before {
+            background: #667eea;
+        }
+
+        .timeline-item.completed {
+            border-left-color: #667eea;
+        }
+
+        .rating {
+            display: flex;
+            gap: 5px;
+            margin: 10px 0;
+        }
+
+        .star {
+            font-size: 24px;
+            cursor: pointer;
+            color: #ddd;
+        }
+
+        .star.active {
+            color: #ffc107;
+        }
+
+        h2 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        h3 {
+            color: #333;
+            font-size: 15px;
+        }
+
+        p {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal-content h2 {
+            margin-bottom: 15px;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            width: auto;
+            color: #666;
+            padding: 5px;
+            margin: 0;
+        }
+
+        input[type="date"], input[type="time"] {
+            padding: 10px;
+        }
+
+        .menu-icon {
+            display: none;
+            background: white;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                border-radius: 0;
+            }
+
+            body {
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚗 Lubrikca</h1>
+            <p>App de Mantenimiento Vehicular</p>
+        </header>
+
+        <div class="content" id="content">
+            <!-- PANTALLA: LOGIN/HOME -->
+            <div id="screen-login" class="screen active">
+                <h2 style="text-align: center;">Bienvenido a Lubrikca</h2>
+                <p style="text-align: center; margin-bottom: 30px;">Gestiona tu vehículo y servicios de mantenimiento</p>
+
+                <div class="form-group">
+                    <label>Usuario Demo (ID)</label>
+                    <input type="text" id="login-usuario-id" value="user-001" placeholder="Ej: user-001">
+                </div>
+
+                <button onclick="app.login()">Ingresar como Usuario Demo</button>
+
+                <button class="btn-secondary" onclick="app.mostrarRegistro()">Registrarse</button>
+            </div>
+
+            <!-- PANTALLA: REGISTRO -->
+            <div id="screen-registro" class="screen">
+                <h2>Crear Cuenta</h2>
+
+                <div class="form-group">
+                    <label>Nombre Completo</label>
+                    <input type="text" id="reg-nombre" placeholder="Juan García">
+                </div>
+
+                <div class="form-group">
+                    <label>Cédula</label>
+                    <input type="text" id="reg-cedula" placeholder="12345678">
+                </div>
+
+                <div class="form-group">
+                    <label>Correo</label>
+                    <input type="email" id="reg-correo" placeholder="correo@example.com">
+                </div>
+
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="tel" id="reg-telefono" placeholder="+58-414-1234567">
+                </div>
+
+                <div class="form-group">
+                    <label>Dirección</label>
+                    <input type="text" id="reg-direccion" placeholder="Calle Principal 123">
+                </div>
+
+                <div class="form-group">
+                    <label>Empresa</label>
+                    <input type="text" id="reg-empresa" placeholder="Tech Corp">
+                </div>
+
+                <button onclick="app.registrarse()">Completar Registro</button>
+                <button class="btn-secondary" onclick="app.volverAlLogin()">Volver</button>
+            </div>
+
+            <!-- PANTALLA: DASHBOARD -->
+            <div id="screen-dashboard" class="screen">
+                <div id="user-info" style="margin-bottom: 20px;"></div>
+
+                <div class="tabs">
+                    <button class="tab active" onclick="app.mostrarTab('resumen')">Resumen</button>
+                    <button class="tab" onclick="app.mostrarTab('vehiculos')">Vehículos</button>
+                    <button class="tab" onclick="app.mostrarTab('citas')">Citas</button>
+                    <button class="tab" onclick="app.mostrarTab('creditos')">Créditos</button>
+                </div>
+
+                <!-- Tab: Resumen -->
+                <div id="tab-resumen" class="tab-content">
+                    <div class="stats">
+                        <div class="stat">
+                            <div class="stat-value" id="stat-vehiculos">0</div>
+                            <div class="stat-label">Vehículos</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value" id="stat-citas">0</div>
+                            <div class="stat-label">Citas</div>
+                        </div>
+                    </div>
+
+                    <div class="stats">
+                        <div class="stat">
+                            <div class="stat-value" id="stat-activas">0</div>
+                            <div class="stat-label">Activas</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value" id="stat-credito">$0</div>
+                            <div class="stat-label">Crédito</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>📍 GPS Activo</h3>
+                        <div class="card-info" id="gps-status">Activado</div>
+                    </div>
+
+                    <button onclick="app.mostrarTab('vehiculos')">Gestionar Vehículos</button>
+                    <button class="btn-secondary" onclick="app.cerrarSesion()">Cerrar Sesión</button>
+                </div>
+
+                <!-- Tab: Vehículos -->
+                <div id="tab-vehiculos" class="tab-content" style="display: none;">
+                    <h3>Mis Vehículos</h3>
+                    <div id="vehiculos-list" class="vehicle-list" style="margin-bottom: 15px;"></div>
+                    <button onclick="app.mostrarAgregarVehiculo()">+ Agregar Vehículo</button>
+                </div>
+
+                <!-- Tab: Citas -->
+                <div id="tab-citas" class="tab-content" style="display: none;">
+                    <h3>Mis Citas de Servicio</h3>
+                    <div id="citas-list"></div>
+                    <button onclick="app.mostrarSolicitarServicio()">+ Solicitar Servicio</button>
+                </div>
+
+                <!-- Tab: Créditos -->
+                <div id="tab-creditos" class="tab-content" style="display: none;">
+                    <h3>Mis Créditos Disponibles</h3>
+                    <div id="creditos-list"></div>
+                </div>
+            </div>
+
+            <!-- PANTALLA: AGREGAR VEHÍCULO -->
+            <div id="screen-agregar-vehiculo" class="screen">
+                <h2>Registrar Vehículo</h2>
+
+                <div class="form-group">
+                    <label>Marca</label>
+                    <select id="veh-marca">
+                        <option value="">Seleccionar...</option>
+                        <option value="Toyota">Toyota</option>
+                        <option value="Chevrolet">Chevrolet</option>
+                        <option value="Ford">Ford</option>
+                        <option value="Honda">Honda</option>
+                        <option value="Nissan">Nissan</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Modelo</label>
+                    <input type="text" id="veh-modelo" placeholder="Corolla">
+                </div>
+
+                <div class="form-group">
+                    <label>Año</label>
+                    <input type="number" id="veh-ano" placeholder="2020" min="1990" max="2025">
+                </div>
+
+                <div class="form-group">
+                    <label>Placa</label>
+                    <input type="text" id="veh-placa" placeholder="ABC-123">
+                </div>
+
+                <div class="form-group">
+                    <label>Tipo de Lubricante</label>
+                    <select id="veh-lubricante">
+                        <option value="">Seleccionar...</option>
+                        <option value="sintético">Sintético</option>
+                        <option value="semisintético">Semisintético</option>
+                        <option value="mineral">Mineral</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Capacidad (litros)</label>
+                    <input type="number" id="veh-litros" placeholder="4.2" step="0.1">
+                </div>
+
+                <div class="form-group">
+                    <label>Kilometraje Actual</label>
+                    <input type="number" id="veh-km" placeholder="50000">
+                </div>
+
+                <button onclick="app.guardarVehiculo()">Guardar Vehículo</button>
+                <button class="btn-secondary" onclick="app.volverAlDashboard()">Cancelar</button>
+            </div>
+
+            <!-- PANTALLA: DETALLES VEHÍCULO -->
+            <div id="screen-detalles-vehiculo" class="screen">
+                <div id="vehiculo-detalle"></div>
+                <button onclick="app.volverAlDashboard()">Volver</button>
+            </div>
+
+            <!-- PANTALLA: SOLICITAR SERVICIO -->
+            <div id="screen-solicitar-servicio" class="screen">
+                <h2>Solicitar Servicio</h2>
+
+                <div class="form-group">
+                    <label>Selecciona tu Vehículo</label>
+                    <select id="servicio-vehiculo" onchange="app.actualizarVehiculoServicio()">
+                        <option value="">Seleccionar...</option>
+                    </select>
+                </div>
+
+                <div id="vehiculo-info-servicio" style="margin-bottom: 15px;"></div>
+
+                <div class="form-group">
+                    <label>Tipo de Servicio</label>
+                    <select id="servicio-tipo">
+                        <option value="cambio_aceite">Cambio de Aceite</option>
+                        <option value="revision_general">Revisión General</option>
+                        <option value="cambio_filtro">Cambio de Filtro</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Fecha</label>
+                    <input type="date" id="servicio-fecha">
+                </div>
+
+                <div class="form-group">
+                    <label>Hora</label>
+                    <input type="time" id="servicio-hora">
+                </div>
+
+                <h3 style="margin-top: 20px;">Selecciona un Taller</h3>
+                <div id="talleres-list" class="taller-list" style="margin-bottom: 15px;"></div>
+
+                <button onclick="app.confirmarSolicitudServicio()">Solicitar Servicio</button>
+                <button class="btn-secondary" onclick="app.volverAlDashboard()">Cancelar</button>
+            </div>
+
+            <!-- PANTALLA: DETALLE CITA -->
+            <div id="screen-detalle-cita" class="screen">
+                <div id="cita-detalle"></div>
+                <button onclick="app.volverAlDashboard()">Volver</button>
+            </div>
+
+            <!-- PANTALLA: ESCANEAR QR -->
+            <div id="screen-escanear-qr" class="screen">
+                <h2>Confirmar Servicio en Taller</h2>
+
+                <div id="qr-display"></div>
+
+                <p style="text-align: center; margin: 20px 0;">
+                    Escanea este código QR en el taller para comenzar el servicio
+                </p>
+
+                <button onclick="app.confirmarEnTaller()">✓ He Escaneado el QR</button>
+                <button class="btn-secondary" onclick="app.volverAlDashboard()">Cancelar</button>
+            </div>
+
+            <!-- PANTALLA: CALIFICAR SERVICIO -->
+            <div id="screen-calificar-servicio" class="screen">
+                <h2>Calificar Servicio</h2>
+
+                <div id="cita-info-calificacion"></div>
+
+                <h3 style="margin-top: 20px;">¿Cómo fue tu experiencia?</h3>
+
+                <div class="rating" id="rating-stars" style="justify-content: center; font-size: 32px;">
+                    <span class="star" data-value="1">★</span>
+                    <span class="star" data-value="2">★</span>
+                    <span class="star" data-value="3">★</span>
+                    <span class="star" data-value="4">★</span>
+                    <span class="star" data-value="5">★</span>
+                </div>
+
+                <div class="form-group">
+                    <label>Comentarios (opcional)</label>
+                    <textarea id="comentario-servicio" placeholder="Cuéntanos tu experiencia..." rows="4"></textarea>
+                </div>
+
+                <button onclick="app.enviarCalificacion()">Enviar Calificación</button>
+                <button class="btn-secondary" onclick="app.volverAlDashboard()">Más Tarde</button>
+            </div>
+        </div>
+
+        <nav id="nav">
+            <button class="nav-btn active" data-screen="screen-dashboard" onclick="app.navegar('screen-dashboard')">
+                <span class="icon">🏠</span>
+                Inicio
+            </button>
+            <button class="nav-btn" data-screen="screen-vehiculos" onclick="app.mostrarTab('vehiculos')">
+                <span class="icon">🚗</span>
+                Vehículos
+            </button>
+            <button class="nav-btn" data-screen="screen-citas" onclick="app.mostrarTab('citas')">
+                <span class="icon">📅</span>
+                Citas
+            </button>
+            <button class="nav-btn" data-screen="screen-creditos" onclick="app.mostrarTab('creditos')">
+                <span class="icon">💳</span>
+                Créditos
+            </button>
+        </nav>
+    </div>
+
+    <!-- MODAL: Mensajes -->
+    <div id="modal-mensaje" class="modal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="app.cerrarModal()">×</button>
+            <h2 id="modal-titulo"></h2>
+            <p id="modal-mensaje"></p>
+            <button onclick="app.cerrarModal()">Entendido</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/cliente';
+
+        let app = {
+            usuarioActual: null,
+            vehiculoSeleccionado: null,
+            tallerSeleccionado: null,
+            calificacionActual: 0,
+            citaActualCalificando: null,
+            citaActualEscaneando: null,
+
+            // Navegación
+            mostrarPantalla(pantallaId) {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById(pantallaId).classList.add('active');
+            },
+
+            navegar(pantallaId) {
+                this.mostrarPantalla(pantallaId);
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                document.querySelector(`[data-screen="${pantallaId}"]`)?.classList.add('active');
+            },
+
+            mostrarTab(tabName) {
+                document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+                document.getElementById(`tab-${tabName}`).style.display = 'block';
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                event.target.classList.add('active');
+
+                if (tabName === 'resumen') this.cargarResumen();
+                else if (tabName === 'vehiculos') this.cargarVehiculos();
+                else if (tabName === 'citas') this.cargarCitas();
+                else if (tabName === 'creditos') this.cargarCreditos();
+            },
+
+            // Auth
+            login() {
+                const usuarioId = document.getElementById('login-usuario-id').value;
+                if (!usuarioId) {
+                    this.mostrarError('Por favor ingresa un ID de usuario');
+                    return;
+                }
+
+                fetch(`${API_BASE}/perfil/${usuarioId}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        this.usuarioActual = data;
+                        this.mostrarPantalla('screen-dashboard');
+                        this.actualizarInfoUsuario();
+                        this.cargarResumen();
+                    })
+                    .catch(() => this.mostrarError('Usuario no encontrado'));
+            },
+
+            registrarse() {
+                const datos = {
+                    nombre: document.getElementById('reg-nombre').value,
+                    cedula: document.getElementById('reg-cedula').value,
+                    correo: document.getElementById('reg-correo').value,
+                    telefono: document.getElementById('reg-telefono').value,
+                    direccion: document.getElementById('reg-direccion').value,
+                    empresa: document.getElementById('reg-empresa').value
+                };
+
+                if (!datos.nombre || !datos.cedula || !datos.correo) {
+                    this.mostrarError('Por favor completa todos los campos');
+                    return;
+                }
+
+                fetch(`${API_BASE}/registro`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(datos)
+                })
+                .then(r => r.json())
+                .then(data => {
+                    this.usuarioActual = data;
+                    document.getElementById('login-usuario-id').value = data.id;
+                    this.mostrarExito(`Bienvenido ${data.datos_personales.nombre}! Tu ID es: ${data.id}`);
+                    setTimeout(() => {
+                        this.mostrarPantalla('screen-dashboard');
+                        this.actualizarInfoUsuario();
+                    }, 2000);
+                })
+                .catch(e => this.mostrarError('Error al registrarse'));
+            },
+
+            cerrarSesion() {
+                this.usuarioActual = null;
+                this.mostrarPantalla('screen-login');
+            },
+
+            // UI
+            mostrarRegistro() {
+                this.mostrarPantalla('screen-registro');
+            },
+
+            volverAlLogin() {
+                this.mostrarPantalla('screen-login');
+            },
+
+            volverAlDashboard() {
+                this.mostrarPantalla('screen-dashboard');
+                this.navegar('screen-dashboard');
+            },
+
+            mostrarAgregarVehiculo() {
+                this.mostrarPantalla('screen-agregar-vehiculo');
+            },
+
+            // Vehículos
+            guardarVehiculo() {
+                const vehiculo = {
+                    marca: document.getElementById('veh-marca').value,
+                    modelo: document.getElementById('veh-modelo').value,
+                    año: parseInt(document.getElementById('veh-ano').value),
+                    placa: document.getElementById('veh-placa').value,
+                    tipo_lubricante: document.getElementById('veh-lubricante').value,
+                    litros_capacidad: parseFloat(document.getElementById('veh-litros').value),
+                    kilometraje_inicial: parseInt(document.getElementById('veh-km').value)
+                };
+
+                if (!vehiculo.marca || !vehiculo.modelo || !vehiculo.año || !vehiculo.placa) {
+                    this.mostrarError('Por favor completa todos los campos');
+                    return;
+                }
+
+                fetch(`${API_BASE}/vehiculos/${this.usuarioActual.id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(vehiculo)
+                })
+                .then(r => r.json())
+                .then(data => {
+                    this.mostrarExito('Vehículo registrado exitosamente');
+                    this.usuarioActual.vehiculos.push(data);
+                    this.cargarVehiculos();
+                    setTimeout(() => this.volverAlDashboard(), 1500);
+                })
+                .catch(() => this.mostrarError('Error al registrar vehículo'));
+            },
+
+            cargarVehiculos() {
+                const container = document.getElementById('vehiculos-list');
+                if (!this.usuarioActual.vehiculos.length) {
+                    container.innerHTML = '<p style="color: #999; text-align: center;">No tienes vehículos registrados</p>';
+                    return;
+                }
+
+                container.innerHTML = this.usuarioActual.vehiculos.map(v => `
+                    <div class="vehicle-item" onclick="app.verDetallesVehiculo('${v.id}')">
+                        <h4>${v.marca} ${v.modelo} (${v.año})</h4>
+                        <div class="card-info">Placa: ${v.placa}</div>
+                        <div class="card-info">Lubricante: ${v.tipo_lubricante}</div>
+                        <div class="card-info">Capacidad: ${v.litros_capacidad} lts</div>
+                        <div class="card-info">KM Inicial: ${v.kilometraje_inicial}</div>
+                    </div>
+                `).join('');
+            },
+
+            verDetallesVehiculo(vehiculoId) {
+                const vehiculo = this.usuarioActual.vehiculos.find(v => v.id === vehiculoId);
+                if (!vehiculo) return;
+
+                fetch(`${API_BASE}/recomendaciones/${vehiculoId}`)
+                    .then(r => r.json())
+                    .then(recomendaciones => {
+                        const html = `
+                            <h2>${vehiculo.marca} ${vehiculo.modelo}</h2>
+                            <div class="card">
+                                <h3>Información del Vehículo</h3>
+                                <div class="card-info">Año: ${vehiculo.año}</div>
+                                <div class="card-info">Placa: ${vehiculo.placa}</div>
+                                <div class="card-info">Tipo Lubricante: ${vehiculo.tipo_lubricante}</div>
+                                <div class="card-info">Capacidad: ${vehiculo.litros_capacidad} lts</div>
+                                <div class="card-info">KM Inicial: ${vehiculo.kilometraje_inicial}</div>
+                            </div>
+
+                            <h3 style="margin-top: 15px;">Mantenimiento Recomendado</h3>
+                            ${recomendaciones.length ? recomendaciones.map(r => `
+                                <div class="card">
+                                    <div class="badge ${r.urgencia === 'crítica' ? 'badge-danger' : 'badge-warning'}">
+                                        ${r.urgencia.toUpperCase()}
+                                    </div>
+                                    <h4>${r.componente}</h4>
+                                    <div class="card-info">Recomendado cada: ${r.kilometraje_recomendado} km</div>
+                                    <div class="card-info">KM actuales del vehículo: ${r.kilometraje_actual}</div>
+                                    <div class="card-info">Estado: ${r.estado}</div>
+                                </div>
+                            `).join('') : '<p style="color: #999;">Sin recomendaciones pendientes</p>'}
+
+                            <div style="margin-top: 15px;">
+                                <button onclick="app.mostrarRegistrarKilometraje('${vehiculoId}')">📍 Registrar Kilometraje</button>
+                            </div>
+                        `;
+
+                        document.getElementById('vehiculo-detalle').innerHTML = html;
+                        this.mostrarPantalla('screen-detalles-vehiculo');
+                    });
+            },
+
+            mostrarRegistrarKilometraje(vehiculoId) {
+                const km = prompt('Ingresa el kilometraje actual:');
+                if (km) {
+                    fetch(`${API_BASE}/kilometraje/${this.usuarioActual.id}/${vehiculoId}?kilometraje=${km}`, {
+                        method: 'POST'
+                    })
+                    .then(r => r.json())
+                    .then(() => {
+                        this.mostrarExito('Kilometraje registrado');
+                        this.verDetallesVehiculo(vehiculoId);
+                    })
+                    .catch(() => this.mostrarError('Error al registrar kilometraje'));
+                }
+            },
+
+            // Servicios
+            mostrarSolicitarServicio() {
+                document.getElementById('servicio-vehiculo').innerHTML = '<option value="">Seleccionar...</option>' +
+                    this.usuarioActual.vehiculos.map(v =>
+                        `<option value="${v.id}">${v.marca} ${v.modelo} - ${v.placa}</option>`
+                    ).join('');
+
+                this.cargarTalleres();
+                this.mostrarPantalla('screen-solicitar-servicio');
+            },
+
+            actualizarVehiculoServicio() {
+                const vehiculoId = document.getElementById('servicio-vehiculo').value;
+                const vehiculo = this.usuarioActual.vehiculos.find(v => v.id === vehiculoId);
+
+                if (vehiculo) {
+                    document.getElementById('vehiculo-info-servicio').innerHTML = `
+                        <div class="card">
+                            <h4>${vehiculo.marca} ${vehiculo.modelo}</h4>
+                            <div class="card-info">Placa: ${vehiculo.placa}</div>
+                            <div class="card-info">Lubricante: ${vehiculo.tipo_lubricante}</div>
+                            <div class="card-info">Capacidad: ${vehiculo.litros_capacidad} lts</div>
+                        </div>
+                    `;
+                }
+            },
+
+            cargarTalleres() {
+                fetch(`${API_BASE}/talleres`)
+                    .then(r => r.json())
+                    .then(talleres => {
+                        document.getElementById('talleres-list').innerHTML = talleres.map(t => `
+                            <div class="taller-item" onclick="app.seleccionarTaller('${t.id}', this)">
+                                <h4>${t.nombre}</h4>
+                                <div class="taller-info">📍 ${t.direccion}</div>
+                                <div class="stars">★★★★★ ${t.calificacion}/5.0</div>
+                            </div>
+                        `).join('');
+                    });
+            },
+
+            seleccionarTaller(tallerId, elemento) {
+                this.tallerSeleccionado = tallerId;
+                document.querySelectorAll('.taller-item').forEach(e => e.classList.remove('selected'));
+                elemento.classList.add('selected');
+            },
+
+            confirmarSolicitudServicio() {
+                const vehiculoId = document.getElementById('servicio-vehiculo').value;
+                const fecha = document.getElementById('servicio-fecha').value;
+                const hora = document.getElementById('servicio-hora').value;
+                const tipo = document.getElementById('servicio-tipo').value;
+
+                if (!vehiculoId || !fecha || !hora || !this.tallerSeleccionado) {
+                    this.mostrarError('Por favor completa todos los campos');
+                    return;
+                }
+
+                const fechaHora = `${fecha}T${hora}:00`;
+
+                fetch(`${API_BASE}/solicitar-servicio/${this.usuarioActual.id}?vehiculo_id=${vehiculoId}&taller_id=${this.tallerSeleccionado}&fecha_hora=${fechaHora}&tipo_servicio=${tipo}`, {
+                    method: 'POST'
+                })
+                .then(r => r.json())
+                .then(data => {
+                    this.mostrarExito(`Servicio solicitado! Cita ID: ${data.cita_id}`);
+                    this.citaActualEscaneando = data.cita_id;
+                    setTimeout(() => this.mostrarEscanearQR(data), 2000);
+                })
+                .catch(() => this.mostrarError('Error al solicitar servicio'));
+            },
+
+            // Citas
+            cargarCitas() {
+                fetch(`${API_BASE}/mis-citas/${this.usuarioActual.id}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        const container = document.getElementById('citas-list');
+                        if (!data.citas.length) {
+                            container.innerHTML = '<p style="color: #999; text-align: center;">No tienes citas agendadas</p>';
+                            return;
+                        }
+
+                        container.innerHTML = data.citas.map(c => `
+                            <div class="card" onclick="app.verDetalleCita('${c.id}')">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <h4 style="margin: 0;">${new Date(c.fecha_hora).toLocaleDateString('es-VE')}</h4>
+                                    <span class="status-badge status-${c.estado}">${c.estado}</span>
+                                </div>
+                                <div class="card-info">Hora: ${new Date(c.fecha_hora).toLocaleTimeString('es-VE', {hour: '2-digit', minute: '2-digit'})}</div>
+                                <div class="card-info">Tipo: ${c.tipo_servicio}</div>
+                                <div class="card-info">Costo: $${c.costo_estimado.toLocaleString('es-VE')}</div>
+                                <div class="card-info">Descuento 50%: -$${c.descuento_credito_50pct.toLocaleString('es-VE')}</div>
+                            </div>
+                        `).join('');
+                    });
+            },
+
+            verDetalleCita(citaId) {
+                fetch(`${API_BASE}/cita/${citaId}`)
+                    .then(r => r.json())
+                    .then(cita => {
+                        const vehiculo = this.usuarioActual.vehiculos.find(v => v.id === cita.vehiculo_id);
+                        const taller = Array.from(document.querySelectorAll('[data-taller-id]')).find(e =>
+                            e.getAttribute('data-taller-id') === cita.taller_id);
+
+                        let botones = '';
+                        if (cita.estado === 'pendiente') {
+                            botones = '<button onclick="app.canelcarCita()">Cancelar Cita</button>';
+                        } else if (cita.estado === 'confirmada') {
+                            botones = '<button onclick="app.mostrarEscanearQR(' + JSON.stringify(cita).replace(/"/g, '&quot;') + ')">Escanear QR</button>';
+                        } else if (cita.estado === 'completada' && !cita.calificacion_taller) {
+                            botones = '<button onclick="app.mostrarCalificarServicio(\'' + citaId + '\')">Calificar Servicio</button>';
+                        }
+
+                        const html = `
+                            <h2>Detalle de Cita</h2>
+                            <div class="card">
+                                <h3>Información General</h3>
+                                <div class="card-info">ID: ${cita.id}</div>
+                                <div class="card-info">Vehículo: ${vehiculo?.marca} ${vehiculo?.modelo}</div>
+                                <div class="card-info">Placa: ${vehiculo?.placa}</div>
+                                <div class="card-info">Fecha: ${new Date(cita.fecha_hora).toLocaleDateString('es-VE')}</div>
+                                <div class="card-info">Hora: ${new Date(cita.fecha_hora).toLocaleTimeString('es-VE', {hour: '2-digit', minute: '2-digit'})}</div>
+                                <div class="card-info">Estado: <span class="status-badge status-${cita.estado}">${cita.estado}</span></div>
+                            </div>
+
+                            <div class="card">
+                                <h3>Costos</h3>
+                                <div class="card-info">Costo Base: $${cita.costo_estimado.toLocaleString('es-VE')}</div>
+                                <div class="card-info" style="color: #28a745;">Descuento 50% Lubricante: -$${cita.descuento_credito_50pct.toLocaleString('es-VE')}</div>
+                                <div class="card-info"><strong>Total a Pagar: $${(cita.costo_estimado - cita.descuento_credito_50pct).toLocaleString('es-VE')}</strong></div>
+                            </div>
+
+                            ${cita.qr_code ? `<div class="qr-code">${cita.qr_code}</div>` : ''}
+
+                            ${cita.calificacion_taller ? `
+                                <div class="card">
+                                    <h3>Tu Calificación</h3>
+                                    <div class="stars" style="font-size: 20px;">${'★'.repeat(cita.calificacion_taller)}${'☆'.repeat(5-cita.calificacion_taller)}</div>
+                                    ${cita.comentario ? `<div class="card-info">${cita.comentario}</div>` : ''}
+                                </div>
+                            ` : ''}
+
+                            ${botones}
+                        `;
+
+                        document.getElementById('cita-detalle').innerHTML = html;
+                        this.mostrarPantalla('screen-detalle-cita');
+                    });
+            },
+
+            canelcarCita() {
+                if (confirm('¿Deseas cancelar esta cita?')) {
+                    const citaId = document.querySelector('[data-cita-id]')?.getAttribute('data-cita-id');
+                    if (citaId) {
+                        fetch(`${API_BASE}/cancelar-cita/${citaId}`, { method: 'POST' })
+                            .then(() => {
+                                this.mostrarExito('Cita cancelada');
+                                this.cargarCitas();
+                            });
+                    }
+                }
+            },
+
+            mostrarEscanearQR(cita) {
+                this.citaActualEscaneando = cita.id || cita;
+                document.getElementById('qr-display').innerHTML = `<div class="qr-code">${cita.qr_code || 'QR-DEMO-CODE'}</div>`;
+                this.mostrarPantalla('screen-escanear-qr');
+            },
+
+            confirmarEnTaller() {
+                fetch(`${API_BASE}/confirmar-en-taller/${this.citaActualEscaneando}`, {
+                    method: 'POST'
+                })
+                .then(r => r.json())
+                .then(() => {
+                    this.mostrarExito('¡Servicio iniciado! Recibiendo beneficio del 50%');
+                    setTimeout(() => this.volverAlDashboard(), 2000);
+                })
+                .catch(() => this.mostrarError('Error al confirmar'));
+            },
+
+            mostrarCalificarServicio(citaId) {
+                this.citaActualCalificando = citaId;
+                fetch(`${API_BASE}/cita/${citaId}`)
+                    .then(r => r.json())
+                    .then(cita => {
+                        document.getElementById('cita-info-calificacion').innerHTML = `
+                            <div class="card">
+                                <h4>Cita del ${new Date(cita.fecha_hora).toLocaleDateString('es-VE')}</h4>
+                                <div class="card-info">Servicio completado exitosamente</div>
+                            </div>
+                        `;
+                        this.mostrarPantalla('screen-calificar-servicio');
+                        this.resetearRating();
+                    });
+            },
+
+            resetearRating() {
+                document.querySelectorAll('.star').forEach(s => s.classList.remove('active'));
+                this.calificacionActual = 0;
+
+                document.querySelectorAll('.star').forEach(star => {
+                    star.addEventListener('click', (e) => {
+                        this.calificacionActual = parseInt(e.target.getAttribute('data-value'));
+                        document.querySelectorAll('.star').forEach((s, i) => {
+                            s.classList.toggle('active', i < this.calificacionActual);
+                        });
+                    });
+                    star.addEventListener('mouseover', (e) => {
+                        const valor = parseInt(e.target.getAttribute('data-value'));
+                        document.querySelectorAll('.star').forEach((s, i) => {
+                            s.classList.toggle('active', i < valor);
+                        });
+                    });
+                });
+
+                document.addEventListener('mouseout', () => {
+                    document.querySelectorAll('.star').forEach((s, i) => {
+                        s.classList.toggle('active', i < this.calificacionActual);
+                    });
+                });
+            },
+
+            enviarCalificacion() {
+                if (this.calificacionActual === 0) {
+                    this.mostrarError('Por favor selecciona una calificación');
+                    return;
+                }
+
+                const comentario = document.getElementById('comentario-servicio').value;
+
+                fetch(`${API_BASE}/completar-servicio/${this.citaActualCalificando}?calificacion=${this.calificacionActual}&comentario=${encodeURIComponent(comentario)}`, {
+                    method: 'POST'
+                })
+                .then(r => r.json())
+                .then(data => {
+                    this.mostrarExito(`${data.mensaje}`);
+                    setTimeout(() => this.volverAlDashboard(), 2000);
+                })
+                .catch(() => this.mostrarError('Error al enviar calificación'));
+            },
+
+            // Créditos
+            cargarCreditos() {
+                fetch(`${API_BASE}/mis-creditos/${this.usuarioActual.id}`)
+                    .then(r => r.json())
+                    .then(creditos => {
+                        const container = document.getElementById('creditos-list');
+                        if (!creditos.length) {
+                            container.innerHTML = '<p style="color: #999; text-align: center;">Sin créditos disponibles</p>';
+                            return;
+                        }
+
+                        const disponibles = creditos.filter(c => !c.aplicado);
+                        const aplicados = creditos.filter(c => c.aplicado);
+                        let html = '';
+
+                        if (disponibles.length) {
+                            html += '<h3 style="margin-top: 15px; margin-bottom: 10px;">Créditos Disponibles</h3>';
+                            html += disponibles.map(c => `
+                                <div class="card" style="background: #d4edda; border-color: #28a745;">
+                                    <h4>$${c.monto_credito.toLocaleString('es-VE')}</h4>
+                                    <div class="card-info">Otorgado: ${new Date(c.fecha_otorgado).toLocaleDateString('es-VE')}</div>
+                                    <div class="badge badge-success">DISPONIBLE</div>
+                                </div>
+                            `).join('');
+                        }
+
+                        if (aplicados.length) {
+                            html += '<h3 style="margin-top: 15px; margin-bottom: 10px;">Créditos Utilizados</h3>';
+                            html += aplicados.map(c => `
+                                <div class="card">
+                                    <h4>$${c.monto_credito.toLocaleString('es-VE')}</h4>
+                                    <div class="badge">APLICADO</div>
+                                </div>
+                            `).join('');
+                        }
+
+                        container.innerHTML = html;
+                    });
+            },
+
+            // Resumen
+            cargarResumen() {
+                fetch(`${API_BASE}/resumen/${this.usuarioActual.id}`)
+                    .then(r => r.json())
+                    .then(resumen => {
+                        document.getElementById('stat-vehiculos').textContent = resumen.total_vehiculos;
+                        document.getElementById('stat-citas').textContent = resumen.total_citas;
+                        document.getElementById('stat-activas').textContent = resumen.citas_activas;
+                        document.getElementById('stat-credito').textContent = `$${resumen.total_credito_disponible.toLocaleString('es-VE')}`;
+                    });
+            },
+
+            actualizarInfoUsuario() {
+                if (!this.usuarioActual) return;
+                const d = this.usuarioActual.datos_personales;
+                document.getElementById('user-info').innerHTML = `
+                    <div class="card">
+                        <h3>👤 ${d.nombre}</h3>
+                        <div class="card-info">📧 ${d.correo}</div>
+                        <div class="card-info">🏢 ${d.empresa}</div>
+                        <div class="card-info">📱 ${d.telefono}</div>
+                    </div>
+                `;
+            },
+
+            // Modales
+            mostrarError(mensaje) {
+                document.getElementById('modal-titulo').textContent = '❌ Error';
+                document.getElementById('modal-mensaje').textContent = mensaje;
+                document.getElementById('modal-mensaje').className = 'alert alert-error';
+                document.getElementById('modal-mensaje').style.margin = '0';
+                document.getElementById('modal-mensaje').style.border = 'none';
+                document.getElementById('modal-mensaje').style.padding = '0';
+                document.getElementById('modal-mensaje').style.background = 'none';
+                document.getElementById('modal-mensaje').style.color = '#721c24';
+                this.abrirModal();
+            },
+
+            mostrarExito(mensaje) {
+                document.getElementById('modal-titulo').textContent = '✓ Éxito';
+                document.getElementById('modal-mensaje').textContent = mensaje;
+                document.getElementById('modal-mensaje').style.color = '#155724';
+                this.abrirModal();
+            },
+
+            abrirModal() {
+                document.getElementById('modal-mensaje').classList.add('alert', 'alert-info');
+                document.getElementById('modal-mensaje').style.color = '#0c5460';
+                document.getElementById('modal-mensaje').style.display = 'block';
+                document.getElementById('modal-mensaje').style.margin = '15px 0 0 0';
+                document.getElementById('modal-mensaje').style.padding = '12px';
+                document.getElementById('modal-mensaje').style.borderRadius = '8px';
+                document.getElementById('modal-mensaje').style.border = '1px solid #bee5eb';
+                document.getElementById('modal-mensaje').style.background = '#d1ecf1';
+                document.getElementById('modal-mensaje').classList.remove('alert-error', 'alert-info');
+                document.getElementById('modal-mensaje').classList.add('alert-info');
+                document.getElementById('modal-mensaje').style.background = '#d1ecf1';
+                document.getElementById('modal-mensaje').style.color = '#0c5460';
+
+                const mensajeElem = document.getElementById('modal-mensaje');
+                if (mensajeElem.textContent.includes('Error') || document.getElementById('modal-titulo').textContent.includes('Error')) {
+                    mensajeElem.classList.remove('alert-info');
+                    mensajeElem.classList.add('alert-error');
+                    mensajeElem.style.background = '#f8d7da';
+                    mensajeElem.style.color = '#721c24';
+                    mensajeElem.style.border = '1px solid #f5c6cb';
+                } else if (document.getElementById('modal-titulo').textContent.includes('Éxito')) {
+                    mensajeElem.classList.remove('alert-info');
+                    mensajeElem.classList.add('alert-success');
+                    mensajeElem.style.background = '#d4edda';
+                    mensajeElem.style.color = '#155724';
+                    mensajeElem.style.border = '1px solid #c3e6cb';
+                }
+
+                document.getElementById('modal-mensaje').classList.remove('alert');
+
+                document.getElementById('modal-mensaje').style.margin = '15px 0 0 0';
+
+                document.getElementById('modal-mensaje').click = function() {};
+
+                document.getElementById('modal-mensaje').style.borderRadius = '8px';
+
+                document.getElementById('modal-mensaje').style.fontSize = '14px';
+                document.getElementById('modal-mensaje').style.lineHeight = '1.5';
+
+                document.getElementById('modal-mensaje').parentElement.style.position = 'relative';
+
+                let tituloDiv = document.createElement('div');
+                tituloDiv.style.fontSize = '18px';
+                tituloDiv.style.fontWeight = '600';
+                tituloDiv.style.marginBottom = '10px';
+                tituloDiv.textContent = document.getElementById('modal-titulo').textContent;
+
+                document.getElementById('modal-mensaje').style.display = 'block';
+
+                document.getElementById('modal-mensaje').innerHTML = `
+                    <div style="margin-bottom: 10px;">${document.getElementById('modal-titulo').textContent}</div>
+                    ${document.getElementById('modal-mensaje').textContent}
+                `;
+
+                document.getElementById('modal-mensaje').classList.remove('alert-info', 'alert-error', 'alert-success');
+
+                if (document.getElementById('modal-titulo').textContent.includes('Error')) {
+                    document.getElementById('modal-mensaje').style.background = '#f8d7da';
+                    document.getElementById('modal-mensaje').style.color = '#721c24';
+                    document.getElementById('modal-mensaje').style.border = '1px solid #f5c6cb';
+                } else if (document.getElementById('modal-titulo').textContent.includes('Éxito')) {
+                    document.getElementById('modal-mensaje').style.background = '#d4edda';
+                    document.getElementById('modal-mensaje').style.color = '#155724';
+                    document.getElementById('modal-mensaje').style.border = '1px solid #c3e6cb';
+                } else {
+                    document.getElementById('modal-mensaje').style.background = '#d1ecf1';
+                    document.getElementById('modal-mensaje').style.color = '#0c5460';
+                    document.getElementById('modal-mensaje').style.border = '1px solid #bee5eb';
+                }
+
+                document.getElementById('modal-mensaje').style.padding = '15px';
+                document.getElementById('modal-mensaje').style.borderRadius = '8px';
+                document.getElementById('modal-mensaje').style.marginTop = '0';
+
+                document.getElementById('modal-mensaje').style.fontSize = '14px';
+
+                document.getElementById('modal-mensaje').parentElement.parentElement.classList.add('active');
+            },
+
+            cerrarModal() {
+                document.getElementById('modal-mensaje').parentElement.parentElement.classList.remove('active');
+            }
+        };
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', () => {
+            // Establecer fecha mínima para el input de fecha
+            const hoy = new Date().toISOString().split('T')[0];
+            document.getElementById('servicio-fecha').setAttribute('min', hoy);
+        });
+    </script>
+</body>
+</html>
