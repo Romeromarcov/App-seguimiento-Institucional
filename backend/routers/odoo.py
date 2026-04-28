@@ -1,40 +1,66 @@
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 import requests
 from datetime import datetime
 from config import ODOO_URL, ODOO_DB, ODOO_USER, ODOO_API_TOKEN
 
 router = APIRouter(prefix="/api/odoo", tags=["odoo"])
 
-def call_odoo_api(endpoint: str, method: str = "POST", data: dict = None):
-    """Llamar a la API JSON-RPC de Odoo"""
-    url = f"{ODOO_URL}/api/v1/{endpoint}" if "/api/" not in endpoint else f"{ODOO_URL}{endpoint}"
+class PaymentData(BaseModel):
+    partner_id: int
+    amount: float
+    reference: str = ""
 
+class SalesOrderData(BaseModel):
+    partner_id: int
+    description: str
+    amount: float
+
+def call_odoo_jsonrpc(method: str, params: dict, endpoint: str = "/jsonrpc"):
+    """Llamar a Odoo usando JSON-RPC"""
+    url = f"{ODOO_URL}{endpoint}"
     headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {ODOO_API_TOKEN}"
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "jsonrpc": "2.0",
+        "method": method,
+        "params": params,
+        "id": 1
     }
 
     try:
-        if method == "POST":
-            response = requests.post(url, json=data, headers=headers, timeout=10)
-        else:
-            response = requests.get(url, headers=headers, timeout=10)
-
+        response = requests.post(url, json=payload, headers=headers, timeout=10)
         response.raise_for_status()
-        return response.json()
+        result = response.json()
+
+        if "error" in result and result["error"]:
+            raise Exception(f"Odoo error: {result['error']}")
+
+        return result.get("result", {})
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error llamando Odoo API: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 @router.get("/test-connection")
 def test_connection():
     """Probar conexión con Odoo"""
     try:
-        result = call_odoo_api("/res.partner", "GET")
+        # Intentar obtener version de Odoo
+        result = call_odoo_jsonrpc(
+            "call",
+            {
+                "service": "common",
+                "method": "version"
+            }
+        )
+
         return {
             "status": "conectado",
             "url": ODOO_URL,
             "user": ODOO_USER,
-            "database": ODOO_DB
+            "database": ODOO_DB,
+            "version": result
         }
     except HTTPException as e:
         return {
@@ -47,22 +73,36 @@ def test_connection():
 def get_partners():
     """Obtener todos los partners (talleres) que sean proveedores"""
     try:
-        # Hacer petición GET a Odoo API REST
-        url = f"{ODOO_URL}/api/v1/res.partner"
-        headers = {
-            "Authorization": f"Bearer {ODOO_API_TOKEN}",
-            "Content-Type": "application/json"
-        }
+        # Autenticar y obtener uid
+        uid = call_odoo_jsonrpc(
+            "call",
+            {
+                "service": "common",
+                "method": "authenticate",
+                "args": [ODOO_DB, ODOO_USER, ODOO_API_TOKEN, {}]
+            }
+        )
 
-        # En Odoo, filtramos por supplier_rank > 0
-        params = {
-            "fields": ["id", "name", "email", "phone", "supplier_rank"],
-            "domain": [["supplier_rank", ">", 0]]
-        }
+        if not uid:
+            raise Exception("Autenticación fallida")
 
-        response = requests.get(url, headers=headers, params=params, timeout=10)
-        response.raise_for_status()
-        partners = response.json().get("records", [])
+        # Obtener partners (supplier_rank > 0)
+        partners = call_odoo_jsonrpc(
+            "call",
+            {
+                "service": "object",
+                "method": "execute",
+                "args": [
+                    ODOO_DB,
+                    uid,
+                    ODOO_API_TOKEN,
+                    "res.partner",
+                    "search_read",
+                    [["supplier_rank", ">", 0]],
+                    ["id", "name", "email", "phone", "supplier_rank"]
+                ]
+            }
+        )
 
         return {
             "partners": partners,
@@ -70,97 +110,117 @@ def get_partners():
             "status": "success"
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error obteniendo partners: {str(e)}")
+        # En caso de error, devolver lista vacía pero sin fallar
+        return {
+            "partners": [],
+            "count": 0,
+            "status": "error",
+            "detail": str(e)
+        }
 
 @router.post("/create-sales-order")
-def create_sales_order(order_data: dict):
+def create_sales_order(order_data: SalesOrderData):
     """Crear sales.order en Odoo desde un pedido"""
     try:
-        # Datos esperados: partner_id, description, amount
-        partner_id = order_data.get("partner_id")
-        description = order_data.get("description", "Pedido desde App")
-        amount = order_data.get("amount", 0)
-
-        url = f"{ODOO_URL}/api/v1/sale.order"
-        headers = {
-            "Authorization": f"Bearer {ODOO_API_TOKEN}",
-            "Content-Type": "application/json"
-        }
-
-        # Estructura de sales.order en Odoo
-        payload = {
-            "jsonrpc": "2.0",
-            "method": "call",
-            "params": {
-                "model": "sale.order",
-                "method": "create",
-                "args": [{
-                    "partner_id": partner_id,
-                    "order_line": [(0, 0, {
-                        "name": description,
-                        "product_qty": 1,
-                        "price_unit": amount
-                    })]
-                }]
+        # Autenticar
+        uid = call_odoo_jsonrpc(
+            "call",
+            {
+                "service": "common",
+                "method": "authenticate",
+                "args": [ODOO_DB, ODOO_USER, ODOO_API_TOKEN, {}]
             }
+        )
+
+        if not uid:
+            raise Exception("Autenticación fallida")
+
+        # Crear sales.order
+        order_vals = {
+            "partner_id": order_data.partner_id,
+            "order_line": [(0, 0, {
+                "name": order_data.description,
+                "product_qty": 1,
+                "price_unit": order_data.amount
+            })]
         }
 
-        response = requests.post(url, json=payload, headers=headers, timeout=10)
-        response.raise_for_status()
-        result = response.json()
-        order_id = result.get("result", {}).get("id")
+        order_id = call_odoo_jsonrpc(
+            "call",
+            {
+                "service": "object",
+                "method": "execute",
+                "args": [
+                    ODOO_DB,
+                    uid,
+                    ODOO_API_TOKEN,
+                    "sale.order",
+                    "create",
+                    [order_vals]
+                ]
+            }
+        )
 
         return {
             "status": "creado",
             "order_id": order_id,
-            "description": description,
-            "amount": amount,
-            "url": f"{ODOO_URL}/web#id={order_id}&model=sale.order"
+            "description": order_data.description,
+            "amount": order_data.amount,
+            "partner_id": order_data.partner_id,
+            "url": f"{ODOO_URL}/web#id={order_id}&model=sale.order&view_type=form"
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creando sales.order: {str(e)}")
 
 @router.post("/create-payment")
-def create_payment(payment_data: dict):
+def create_payment(payment_data: PaymentData):
     """Crear account.payment en Odoo (crédito a taller)"""
     try:
-        partner_id = payment_data.get("partner_id")
-        amount = payment_data.get("amount", 0)
-        reference = payment_data.get("reference", "")
-
-        url = f"{ODOO_URL}/api/v1/account.payment"
-        headers = {
-            "Authorization": f"Bearer {ODOO_API_TOKEN}",
-            "Content-Type": "application/json"
-        }
-
-        payload = {
-            "jsonrpc": "2.0",
-            "method": "call",
-            "params": {
-                "model": "account.payment",
-                "method": "create",
-                "args": [{
-                    "partner_id": partner_id,
-                    "amount": amount,
-                    "payment_type": "outbound",
-                    "partner_type": "supplier",
-                    "memo": f"Credito CxC - {reference}"
-                }]
+        # Autenticar
+        uid = call_odoo_jsonrpc(
+            "call",
+            {
+                "service": "common",
+                "method": "authenticate",
+                "args": [ODOO_DB, ODOO_USER, ODOO_API_TOKEN, {}]
             }
+        )
+
+        if not uid:
+            raise Exception("Autenticación fallida")
+
+        # Crear payment
+        payment_vals = {
+            "partner_id": payment_data.partner_id,
+            "amount": payment_data.amount,
+            "payment_type": "outbound",
+            "partner_type": "supplier",
+            "memo": f"Credito CxC - {payment_data.reference}"
         }
 
-        response = requests.post(url, json=payload, headers=headers, timeout=10)
-        response.raise_for_status()
-        result = response.json()
-        payment_id = result.get("result", {}).get("id")
+        payment_id = call_odoo_jsonrpc(
+            "call",
+            {
+                "service": "object",
+                "method": "execute",
+                "args": [
+                    ODOO_DB,
+                    uid,
+                    ODOO_API_TOKEN,
+                    "account.payment",
+                    "create",
+                    [payment_vals]
+                ]
+            }
+        )
 
         return {
             "status": "creado",
             "payment_id": payment_id,
-            "amount": amount,
-            "reference": reference,
-            "url": f"{ODOO_URL}/web#id={payment_id}&model=account.payment"
+            "amount": payment_data.amount,
+            "reference": payment_data.reference,
+            "partner_id": payment_data.partner_id,
+            "url": f"{ODOO_URL}/web#id={payment_id}&model=account.payment&view_type=form"
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creando payment: {str(e)}")
@@ -169,22 +229,41 @@ def create_payment(payment_data: dict):
 def get_sales_orders(partner_id: int = None):
     """Obtener sales.orders de Odoo"""
     try:
-        url = f"{ODOO_URL}/api/v1/sale.order"
-        headers = {
-            "Authorization": f"Bearer {ODOO_API_TOKEN}",
-            "Content-Type": "application/json"
-        }
+        # Autenticar
+        uid = call_odoo_jsonrpc(
+            "call",
+            {
+                "service": "common",
+                "method": "authenticate",
+                "args": [ODOO_DB, ODOO_USER, ODOO_API_TOKEN, {}]
+            }
+        )
 
-        params = {
-            "fields": ["id", "name", "partner_id", "date_order", "amount_total", "state"]
-        }
+        if not uid:
+            raise Exception("Autenticación fallida")
 
+        # Filtro
+        domain = []
         if partner_id:
-            params["domain"] = [["partner_id", "=", partner_id]]
+            domain = [["partner_id", "=", partner_id]]
 
-        response = requests.get(url, headers=headers, params=params, timeout=10)
-        response.raise_for_status()
-        orders = response.json().get("records", [])
+        # Obtener órdenes
+        orders = call_odoo_jsonrpc(
+            "call",
+            {
+                "service": "object",
+                "method": "execute",
+                "args": [
+                    ODOO_DB,
+                    uid,
+                    ODOO_API_TOKEN,
+                    "sale.order",
+                    "search_read",
+                    domain,
+                    ["id", "name", "partner_id", "date_order", "amount_total", "state"]
+                ]
+            }
+        )
 
         return {
             "orders": orders,
@@ -192,28 +271,52 @@ def get_sales_orders(partner_id: int = None):
             "status": "success"
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error obteniendo sales.orders: {str(e)}")
+        return {
+            "orders": [],
+            "count": 0,
+            "status": "error",
+            "detail": str(e)
+        }
 
 @router.get("/payments")
 def get_payments(partner_id: int = None):
     """Obtener account.payments de Odoo"""
     try:
-        url = f"{ODOO_URL}/api/v1/account.payment"
-        headers = {
-            "Authorization": f"Bearer {ODOO_API_TOKEN}",
-            "Content-Type": "application/json"
-        }
+        # Autenticar
+        uid = call_odoo_jsonrpc(
+            "call",
+            {
+                "service": "common",
+                "method": "authenticate",
+                "args": [ODOO_DB, ODOO_USER, ODOO_API_TOKEN, {}]
+            }
+        )
 
-        params = {
-            "fields": ["id", "name", "partner_id", "date", "amount", "state"]
-        }
+        if not uid:
+            raise Exception("Autenticación fallida")
 
+        # Filtro
+        domain = [["partner_type", "=", "supplier"]]
         if partner_id:
-            params["domain"] = [["partner_id", "=", partner_id], ["partner_type", "=", "supplier"]]
+            domain.append(["partner_id", "=", partner_id])
 
-        response = requests.get(url, headers=headers, params=params, timeout=10)
-        response.raise_for_status()
-        payments = response.json().get("records", [])
+        # Obtener pagos
+        payments = call_odoo_jsonrpc(
+            "call",
+            {
+                "service": "object",
+                "method": "execute",
+                "args": [
+                    ODOO_DB,
+                    uid,
+                    ODOO_API_TOKEN,
+                    "account.payment",
+                    "search_read",
+                    domain,
+                    ["id", "name", "partner_id", "date", "amount", "state"]
+                ]
+            }
+        )
 
         return {
             "payments": payments,
@@ -221,4 +324,9 @@ def get_payments(partner_id: int = None):
             "status": "success"
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error obteniendo payments: {str(e)}")
+        return {
+            "payments": [],
+            "count": 0,
+            "status": "error",
+            "detail": str(e)
+        }
