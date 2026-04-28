@@ -509,9 +509,13 @@
     <div class="form-section">
       <div class="form-group">
         <label>Pedido a Cotizar</label>
-        <select id="cot-pedido">
+        <select id="cot-pedido" onchange="updatePedidoData()">
           <option value="">-- Seleccionar pedido --</option>
         </select>
+      </div>
+      <div class="form-group">
+        <label>Monto ($)</label>
+        <input type="number" id="cot-monto" placeholder="0.00" step="0.01" readonly>
       </div>
       <div class="form-group">
         <label>Notas Adicionales</label>
@@ -713,6 +717,11 @@
         <td><button class="btn btn-sm btn-primary" onclick="alert('Cotización: ${c.id}')">Detalles</button></td>
       </tr>
     `).join('');
+
+    // Cargar select de pedidos en modal
+    const select = document.getElementById('cot-pedido');
+    select.innerHTML = '<option value="">-- Seleccionar pedido --</option>' +
+      mockData.pedidos.map(p => `<option value="${p.id}">${p.id} - ${p.articulos}</option>`).join('');
   }
 
   // Funciones auxiliares
@@ -813,16 +822,61 @@
     // Datos del solicitante se pueden cargar aquí si es necesario
   }
 
-  function guardarPago() {
+  async function guardarPago() {
+    const factura = document.getElementById('np-factura').value;
     const monto = document.getElementById('np-monto').value;
-    if(!monto) {
-      alert('Ingresa el monto del pago');
+
+    if(!factura || !monto) {
+      alert('Selecciona factura e ingresa monto');
       return;
     }
-    alert('✓ Pago registrado correctamente por $' + monto);
-    closeModal('modal-nuevo-pago');
-    loadPagos();
-    loadDashboard();
+
+    try {
+      const btn = event.target;
+      btn.disabled = true;
+      btn.textContent = 'Guardando...';
+
+      // Buscar el partner (taller) de la factura
+      const fact = mockData.facturas.find(f => f.id === factura);
+      const partnerId = 1; // Esto debería venir de Odoo, temporalmente 1
+
+      const response = await fetch('/api/odoo/create-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          partner_id: partnerId,
+          amount: parseFloat(monto),
+          reference: factura
+        })
+      });
+
+      const result = await response.json();
+
+      if(response.ok) {
+        // Agregar a mock data localmente
+        mockData.pagos.push({
+          fecha: new Date().toISOString().split('T')[0],
+          cliente: fact.cliente,
+          factura: factura,
+          monto: parseFloat(monto),
+          metodo: 'Transferencia Odoo',
+          referencia: result.reference || result.payment_id,
+          estado: 'Confirmado'
+        });
+
+        alert('✓ Pago registrado y enviado a Odoo (ID: ' + result.payment_id + ')');
+        closeModal('modal-nuevo-pago');
+        loadPagos();
+        loadDashboard();
+      } else {
+        alert('Error: ' + result.detail);
+      }
+    } catch(e) {
+      alert('Error: ' + e.message);
+    } finally {
+      event.target.disabled = false;
+      event.target.textContent = 'Guardar';
+    }
   }
 
   function guardarNC() {
@@ -837,27 +891,113 @@
     loadDashboard();
   }
 
-  function guardarPedido() {
+  async function guardarPedido() {
+    const solicitante = document.getElementById('ped-solicitante').value;
     const articulo = document.getElementById('ped-articulo').value;
     const cantidad = document.getElementById('ped-cantidad').value;
-    if(!articulo || !cantidad) {
-      alert('Selecciona artículo y cantidad');
+    const monto = document.getElementById('ped-monto').value;
+
+    if(!solicitante || !articulo || !cantidad || !monto) {
+      alert('Completa todos los campos');
       return;
     }
-    alert('✓ Pedido creado: ' + cantidad + 'x ' + articulo);
-    closeModal('modal-nuevo-pedido');
-    loadPedidos();
+
+    try {
+      const btn = event.target;
+      btn.disabled = true;
+      btn.textContent = 'Creando...';
+
+      // Crear sales.order en Odoo
+      const response = await fetch('/api/odoo/create-sales-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          partner_id: 1, // Temporalmente
+          description: cantidad + 'x ' + articulo,
+          amount: parseFloat(monto)
+        })
+      });
+
+      const result = await response.json();
+
+      if(response.ok) {
+        // Agregar a mock data
+        mockData.pedidos.push({
+          id: 'PED-' + new Date().getFullYear() + '-' + String(mockData.pedidos.length + 1).padStart(3, '0'),
+          solicitante: solicitante,
+          articulos: cantidad + 'x ' + articulo,
+          monto: parseFloat(monto),
+          fecha: new Date().toISOString().split('T')[0],
+          estado: 'Enviado',
+          odooOrderId: result.order_id
+        });
+
+        alert('✓ Pedido creado en Odoo (Order #' + result.order_id + ')');
+        closeModal('modal-nuevo-pedido');
+        loadPedidos();
+        loadDashboard();
+      } else {
+        alert('Error: ' + result.detail);
+      }
+    } catch(e) {
+      alert('Error: ' + e.message);
+    } finally {
+      event.target.disabled = false;
+      event.target.textContent = 'Crear';
+    }
   }
 
-  function enviarCotizacion() {
+  async function enviarCotizacion() {
     const pedido = document.getElementById('cot-pedido').value;
-    if(!pedido) {
-      alert('Selecciona un pedido');
+    const monto = document.getElementById('cot-monto').value;
+
+    if(!pedido || !monto) {
+      alert('Selecciona pedido e ingresa monto');
       return;
     }
-    alert('✓ Cotización enviada a Odoo');
-    closeModal('modal-enviar-cotizacion');
-    loadCotizaciones();
+
+    try {
+      const btn = event.target;
+      btn.disabled = true;
+      btn.textContent = 'Enviando...';
+
+      // Obtener datos del pedido
+      const ped = mockData.pedidos.find(p => p.id === pedido);
+      const partnerId = 1; // Temporalmente
+
+      const response = await fetch('/api/odoo/create-sales-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          partner_id: partnerId,
+          description: ped.articulos,
+          amount: parseFloat(monto)
+        })
+      });
+
+      const result = await response.json();
+
+      if(response.ok) {
+        // Actualizar mock data
+        const cot = mockData.cotizaciones.find(c => c.pedido === pedido);
+        if(cot) {
+          cot.estadoOdoo = 'Enviada a Odoo';
+          cot.odooOrderId = result.order_id;
+          cot.odooUrl = result.url;
+        }
+
+        alert('✓ Cotización creada en Odoo (Order #' + result.order_id + ')');
+        closeModal('modal-enviar-cotizacion');
+        loadCotizaciones();
+      } else {
+        alert('Error: ' + result.detail);
+      }
+    } catch(e) {
+      alert('Error: ' + e.message);
+    } finally {
+      event.target.disabled = false;
+      event.target.textContent = 'Enviar';
+    }
   }
 
   function generarReporte() {
@@ -888,9 +1028,41 @@
     }
   }
 
+  // Cargar partners desde Odoo
+  async function loadPartners() {
+    try {
+      const response = await fetch('/api/odoo/partners');
+      if(response.ok) {
+        const data = await response.json();
+        const partners = data.partners || [];
+
+        // Agregar a selects de solicitantes
+        const select = document.getElementById('ped-solicitante');
+        if(select) {
+          select.innerHTML = '<option value="">-- Seleccionar taller --</option>' +
+            partners.map(p => `<option value="${p.id}" data-name="${p.name}">${p.name}</option>`).join('');
+        }
+
+        console.log('Partners cargados:', partners.length);
+      }
+    } catch(e) {
+      console.log('No se pudieron cargar partners de Odoo (usando mock data)');
+    }
+  }
+
+  // Actualizar monto cuando se selecciona un pedido
+  function updatePedidoData() {
+    const select = document.getElementById('cot-pedido').value;
+    const pedido = mockData.pedidos.find(p => p.id === select);
+    if(pedido) {
+      document.getElementById('cot-monto').value = pedido.monto;
+    }
+  }
+
   // Inicializar
   window.onload = () => {
     loadDashboard();
+    loadPartners(); // Cargar partners de Odoo
   };
 </script>
 </body>

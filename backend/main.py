@@ -9,6 +9,7 @@ from fastapi.responses import FileResponse
 
 from routers.cliente import router as cliente_router
 from routers.taller import router as taller_router
+from routers.odoo import router as odoo_router
 
 app = FastAPI(
     title='App Seguimiento Institucional',
@@ -27,6 +28,7 @@ app.add_middleware(
 # Registrar routers
 app.include_router(cliente_router)
 app.include_router(taller_router)
+app.include_router(odoo_router)
 
 # Frontend estático
 frontend_dir = os.path.join(os.path.dirname(__file__), '..', 'frontend')
