@@ -71,7 +71,7 @@ def test_connection():
 
 @router.get("/partners")
 def get_partners():
-    """Obtener todos los partners (talleres) que sean proveedores"""
+    """Obtener todos los customers (clientes)"""
     try:
         # Autenticar y obtener uid
         uid = call_odoo_jsonrpc(
@@ -86,7 +86,7 @@ def get_partners():
         if not uid:
             raise Exception("Autenticación fallida")
 
-        # Obtener partners (supplier_rank > 0)
+        # Obtener customers (is_customer = True)
         partners = call_odoo_jsonrpc(
             "call",
             {
@@ -98,8 +98,8 @@ def get_partners():
                     ODOO_API_TOKEN,
                     "res.partner",
                     "search_read",
-                    [["supplier_rank", ">", 0]],
-                    ["id", "name", "email", "phone", "supplier_rank"]
+                    [["is_customer", "=", True]],
+                    ["id", "name", "email", "phone", "city"]
                 ]
             }
         )
@@ -280,7 +280,7 @@ def get_sales_orders(partner_id: int = None):
 
 @router.get("/payments")
 def get_payments(partner_id: int = None):
-    """Obtener account.payments de Odoo"""
+    """Obtener account.payments reales de Odoo (pagos de clientes)"""
     try:
         # Autenticar
         uid = call_odoo_jsonrpc(
@@ -295,12 +295,12 @@ def get_payments(partner_id: int = None):
         if not uid:
             raise Exception("Autenticación fallida")
 
-        # Filtro
-        domain = [["partner_type", "=", "supplier"]]
+        # Filtro - Pagos de entrada (inbound) de clientes
+        domain = [["partner_type", "=", "customer"], ["payment_type", "=", "inbound"]]
         if partner_id:
             domain.append(["partner_id", "=", partner_id])
 
-        # Obtener pagos
+        # Obtener pagos reales
         payments = call_odoo_jsonrpc(
             "call",
             {
@@ -313,7 +313,8 @@ def get_payments(partner_id: int = None):
                     "account.payment",
                     "search_read",
                     domain,
-                    ["id", "name", "partner_id", "date", "amount", "state"]
+                    ["id", "name", "partner_id", "date", "amount", "state", "journal_id", "payment_method_id"],
+                    50
                 ]
             }
         )

@@ -480,18 +480,24 @@
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Artículo</label>
-          <select id="ped-articulo">
-            <option value="">-- Seleccionar artículo --</option>
-            <option value="aceite-mobil">Aceite Mobil 5W-30</option>
-            <option value="filtro-aire">Filtro de Aire</option>
-            <option value="pastillas-freno">Pastillas de Freno</option>
-            <option value="bujias">Bujías NGK</option>
+          <label>Producto</label>
+          <select id="ped-articulo" onchange="updateProductData()">
+            <option value="">-- Seleccionar producto --</option>
           </select>
         </div>
         <div class="form-group">
+          <label>Precio Unit. ($)</label>
+          <input type="number" id="ped-precio" placeholder="0.00" step="0.01" readonly>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
           <label>Cantidad</label>
-          <input type="number" id="ped-cantidad" placeholder="1" min="1">
+          <input type="number" id="ped-cantidad" placeholder="1" min="1" onchange="calcularMonto()">
+        </div>
+        <div class="form-group">
+          <label>Monto Total ($)</label>
+          <input type="number" id="ped-monto" placeholder="0.00" step="0.01" readonly>
         </div>
       </div>
     </div>
@@ -1077,11 +1083,16 @@
     const solicitanteSelect = document.getElementById('ped-solicitante');
     const solicitanteId = solicitanteSelect.value;
     const solicitante = solicitanteSelect.options[solicitanteSelect.selectedIndex].textContent;
-    const articulo = document.getElementById('ped-articulo').value;
-    const cantidad = document.getElementById('ped-cantidad').value;
-    const monto = document.getElementById('ped-monto').value;
 
-    if(!solicitanteId || !articulo || !cantidad || !monto) {
+    const productoSelect = document.getElementById('ped-articulo');
+    const productoId = productoSelect.value;
+    const producto = productoSelect.options[productoSelect.selectedIndex].textContent;
+
+    const cantidad = document.getElementById('ped-cantidad').value;
+    const precio = parseFloat(document.getElementById('ped-precio').value) || 0;
+    const monto = parseFloat(document.getElementById('ped-monto').value) || 0;
+
+    if(!solicitanteId || !productoId || !cantidad || !monto) {
       alert('Completa todos los campos');
       return;
     }
@@ -1091,17 +1102,16 @@
       btn.disabled = true;
       btn.textContent = 'Creando...';
 
-      // El valor del select ya es el partner_id de Odoo
       const partnerId = parseInt(solicitanteId);
 
-      // Crear sales.order en Odoo
+      // Crear sales.order en Odoo con producto real
       const response = await fetch('/api/odoo/create-sales-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           partner_id: partnerId,
-          description: cantidad + 'x ' + articulo,
-          amount: parseFloat(monto)
+          description: `${cantidad}x ${producto} (Producto ID: ${productoId})`,
+          amount: monto
         })
       });
 
@@ -1112,15 +1122,26 @@
         mockData.pedidos.push({
           id: 'PED-' + new Date().getFullYear() + '-' + String(mockData.pedidos.length + 1).padStart(3, '0'),
           solicitante: solicitante,
-          articulos: cantidad + 'x ' + articulo,
-          monto: parseFloat(monto),
+          articulos: `${cantidad}x ${producto}`,
+          monto: monto,
           fecha: new Date().toISOString().split('T')[0],
           estado: 'Enviado',
           odooOrderId: result.order_id,
-          odooUrl: result.url
+          odooUrl: result.url,
+          productoId: productoId,
+          precio: precio,
+          cantidad: cantidad
         });
 
-        alert('✓ Pedido creado en Odoo (Order #' + result.order_id + ')\nAbre tu instancia de Odoo para confirmar.');
+        alert('✓ Pedido creado en Odoo (Order #' + result.order_id + ')\n' + producto + ' x' + cantidad + ' = $' + monto.toLocaleString('es-ES', {maximumFractionDigits: 2}));
+
+        // Limpiar formulario
+        document.getElementById('ped-solicitante').value = '';
+        document.getElementById('ped-articulo').value = '';
+        document.getElementById('ped-cantidad').value = '1';
+        document.getElementById('ped-precio').value = '';
+        document.getElementById('ped-monto').value = '';
+
         closeModal('modal-nuevo-pedido');
         loadPedidos();
         loadDashboard();
@@ -1131,7 +1152,7 @@
       alert('Error: ' + e.message);
     } finally {
       event.target.disabled = false;
-      event.target.textContent = 'Crear';
+      event.target.textContent = 'Crear Pedido';
     }
   }
 
@@ -1222,31 +1243,64 @@
     }
   }
 
-  // Cargar partners desde Odoo
+  // Cargar partners y productos desde Odoo
   async function loadPartners() {
     try {
-      const response = await fetch('/api/odoo/partners');
-      if(response.ok) {
-        const data = await response.json();
+      // Cargar customers
+      const partnersRes = await fetch('/api/odoo/partners');
+      if(partnersRes.ok) {
+        const data = await partnersRes.json();
         const partners = data.partners || [];
-
-        // Almacenar globalmente para usar en guardar
         odooPartners = partners;
 
         // Agregar a select de solicitantes
         const select = document.getElementById('ped-solicitante');
         if(select && partners.length > 0) {
-          select.innerHTML = '<option value="">-- Seleccionar taller --</option>' +
+          select.innerHTML = '<option value="">-- Seleccionar customer --</option>' +
             partners.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
         }
 
-        console.log('✓ Partners cargados desde Odoo:', partners.length);
+        console.log('✓ Customers cargados desde Odoo:', partners.length);
+      }
+
+      // Cargar productos
+      const productsRes = await fetch('/api/odoo/products?limit=100');
+      if(productsRes.ok) {
+        const data = await productsRes.json();
+        const products = data.products || [];
+        odooProducts = products;
+
+        // Agregar a select de productos
+        const selectProd = document.getElementById('ped-articulo');
+        if(selectProd && products.length > 0) {
+          selectProd.innerHTML = '<option value="">-- Seleccionar producto --</option>' +
+            products.map(p => `<option value="${p.id}" data-price="${p.list_price}">${p.name} (${p.default_code || 'S/C'}) - $${p.list_price.toLocaleString('es-ES', {maximumFractionDigits: 2})}</option>`).join('');
+        }
+
+        console.log('✓ Productos cargados desde Odoo:', products.length);
         return true;
       }
     } catch(e) {
-      console.log('No se pudieron cargar partners (usando modo mock): ' + e.message);
+      console.log('No se pudieron cargar datos de Odoo: ' + e.message);
     }
     return false;
+  }
+
+  // Actualizar precio cuando se selecciona producto
+  function updateProductData() {
+    const select = document.getElementById('ped-articulo');
+    const option = select.options[select.selectedIndex];
+    const precio = option.getAttribute('data-price') || 0;
+    document.getElementById('ped-precio').value = parseFloat(precio).toLocaleString('es-ES', {maximumFractionDigits: 2});
+    calcularMonto();
+  }
+
+  // Calcular monto total
+  function calcularMonto() {
+    const precio = parseFloat(document.getElementById('ped-precio').value) || 0;
+    const cantidad = parseFloat(document.getElementById('ped-cantidad').value) || 0;
+    const monto = precio * cantidad;
+    document.getElementById('ped-monto').value = monto.toLocaleString('es-ES', {maximumFractionDigits: 2});
   }
 
   // Actualizar monto cuando se selecciona un pedido
