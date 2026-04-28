@@ -1,11 +1,11 @@
 from fastapi import APIRouter, HTTPException, Query
 from datetime import datetime, timedelta
 from typing import List, Optional
-from ..models.cliente import (
+from models.cliente import (
     UsuarioCliente, Vehiculo, DatosPersonales, ServicioCita,
     RecomendacionMantenimiento, CreditoBeneficio
 )
-from ..services.cliente_service import ClienteService
+from services.cliente_service import ClienteService
 
 router = APIRouter(prefix="/api/cliente", tags=["cliente"])
 service = ClienteService()

@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timedelta
 from typing import List, Optional
-from ..models.cliente import (
+from models.cliente import (
     UsuarioCliente, Vehiculo, RegistroKilometraje, ServicioCita,
     RecomendacionMantenimiento, CreditoBeneficio, Taller, DatosPersonales,
     EstadoCita, TipoLubricante

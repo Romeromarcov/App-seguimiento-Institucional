@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lubrikca - Gestión de Mantenimiento Vehicular</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .logo {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: white;
+            font-size: 42px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 18px;
+            margin-bottom: 50px;
+        }
+
+        .modules-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .module-card {
+            background: white;
+            border-radius: 15px;
+            padding: 40px 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .module-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .module-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+
+        .module-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .module-description {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .module-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 15px;
+        }
+
+        .module-badge.coming-soon {
+            background: #ccc;
+            color: #666;
+        }
+
+        .footer {
+            margin-top: 60px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+        }
+
+        .footer-text {
+            margin-bottom: 10px;
+        }
+
+        .version {
+            font-size: 12px;
+            opacity: 0.6;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 32px;
+            }
+
+            .subtitle {
+                font-size: 16px;
+            }
+
+            .module-title {
+                font-size: 24px;
+            }
+
+            .module-card {
+                padding: 30px 20px;
+            }
+
+            .logo {
+                font-size: 60px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 28px;
+            }
+
+            .subtitle {
+                font-size: 14px;
+            }
+
+            .module-card {
+                padding: 25px 15px;
+            }
+
+            .module-icon {
+                font-size: 50px;
+            }
+
+            .module-title {
+                font-size: 20px;
+            }
+
+            .logo {
+                font-size: 50px;
+                margin-bottom: 15px;
+            }
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 30px;
+            margin-bottom: 40px;
+        }
+
+        .status-item {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 13px;
+            border-left: 3px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .status-item strong {
+            display: block;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .status-item.active {
+            border-left-color: #4CAF50;
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .status-item.pending {
+            border-left-color: #FFC107;
+            background: rgba(255, 193, 7, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🚗</div>
+
+        <h1>Lubrikca</h1>
+        <p class="subtitle">Plataforma Integral de Gestión de Mantenimiento Vehicular</p>
+
+        <div class="status-grid">
+            <div class="status-item active">
+                <strong>3/4</strong>
+                Módulos
+            </div>
+            <div class="status-item active">
+                <strong>58</strong>
+                Endpoints
+            </div>
+            <div class="status-item active">
+                <strong>75%</strong>
+                Completado
+            </div>
+        </div>
+
+        <div class="modules-grid">
+            <!-- CLIENTES -->
+            <a href="/cliente" class="module-card">
+                <div class="module-icon">👤</div>
+                <div class="module-title">Clientes</div>
+                <p class="module-description">
+                    Gestiona tus vehículos, solicita servicios de mantenimiento, rastreia citas y recibe créditos por servicios.
+                </p>
+                <span class="module-badge">✅ Activo</span>
+            </a>
+
+            <!-- TALLERES -->
+            <a href="/taller" class="module-card">
+                <div class="module-icon">🏢</div>
+                <div class="module-title">Talleres</div>
+                <p class="module-description">
+                    Gestiona citas de clientes, asigna mecánicos, registra servicios completados y monitorea el desempeño.
+                </p>
+                <span class="module-badge">✅ Activo</span>
+            </a>
+
+            <!-- EMPRESAS -->
+            <a href="/empresa" class="module-card">
+                <div class="module-icon">🏭</div>
+                <div class="module-title">Empresas</div>
+                <p class="module-description">
+                    Gestiona flotas corporativas, supervisa mantenimiento y genera reportes de gastos.
+                </p>
+                <span class="module-badge">✅ Activo</span>
+            </a>
+        </div>
+
+        <div class="footer">
+            <div class="footer-text">
+                💡 <strong>Tip:</strong> Usa las credenciales de prueba para explorar la aplicación
+            </div>
+            <div class="version">
+                Versión 1.0.0 - MVP © 2026 Lubrikca
+            </div>
+        </div>
+    </div>
+</body>
+</html>

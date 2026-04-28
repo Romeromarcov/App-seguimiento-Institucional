@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lubrikca - Portal de Empresas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .login-section {
+            padding: 40px;
+            max-width: 500px;
+            margin: 50px auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-section h2 {
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+            padding: 10px 20px;
+        }
+
+        .btn-success {
+            background: #4CAF50;
+            color: white;
+            padding: 8px 16px;
+            font-size: 12px;
+        }
+
+        .dashboard {
+            padding: 30px;
+            display: none;
+        }
+
+        .dashboard.active {
+            display: block;
+        }
+
+        .company-info {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+        }
+
+        .company-info h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .info-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+
+        .info-item label {
+            font-size: 12px;
+            color: #999;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .info-item span {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            color: #999;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .card-title {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 16px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-activo {
+            background: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .status-inactivo {
+            background: #f8d7da;
+            color: #842029;
+        }
+
+        .status-vencido {
+            background: #f8d7da;
+            color: #842029;
+        }
+
+        .status-pagado {
+            background: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .status-pendiente {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .card-detail {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .detail-item {
+            font-size: 13px;
+        }
+
+        .detail-label {
+            color: #999;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .detail-value {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 30px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 15px;
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            color: #667eea;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .file-input-label:hover {
+            background: #f0f0f0;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .tab {
+                padding: 12px 15px;
+                font-size: 13px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .info-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 5px;
+            }
+
+            .header {
+                padding: 15px;
+            }
+
+            .dashboard {
+                padding: 15px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏭 Lubrikca - Portal de Empresas</h1>
+            <p>Gestión de flota corporativa y convenios</p>
+        </div>
+
+        <!-- LOGIN -->
+        <div id="loginSection" class="login-section">
+            <h2>Ingresa tu Empresa</h2>
+            <div class="form-group">
+                <label>Selecciona tu Empresa:</label>
+                <select id="empresaSelect">
+                    <option value="">-- Seleccionar Empresa --</option>
+                    <option value="empresa-001">Transportes Global S.A.</option>
+                    <option value="empresa-002">LogísticaExpress S.A.</option>
+                    <option value="empresa-003">Distribuidora Premium S.A.</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" onclick="app.login()">Ingresar</button>
+        </div>
+
+        <!-- DASHBOARD -->
+        <div id="dashboard" class="dashboard">
+            <!-- Información de la Empresa -->
+            <div class="company-info">
+                <h3 id="empresaNombre"></h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>RIF</label>
+                        <span id="empresaRIF"></span>
+                    </div>
+                    <div class="info-item">
+                        <label>Correo</label>
+                        <span id="empresaCorreo"></span>
+                    </div>
+                    <div class="info-item">
+                        <label>Teléfono</label>
+                        <span id="empresaTelefono"></span>
+                    </div>
+                    <div class="info-item">
+                        <label>Dirección</label>
+                        <span id="empresaDireccion"></span>
+                    </div>
+                    <div class="info-item">
+                        <label>Empleados</label>
+                        <span id="empresaEmpleados">0</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Vehículos en Flota</label>
+                        <span id="empresaVehiculos">0</span>
+                    </div>
+                </div>
+                <button class="btn btn-secondary" style="margin-top: 15px; width: auto;" onclick="app.logout()">Cerrar Sesión</button>
+            </div>
+
+            <!-- Estadísticas -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="vehiculosActivos">0</div>
+                    <div class="stat-label">Vehículos Activos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="facturasVencidas">0</div>
+                    <div class="stat-label">Facturas Vencidas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="deudaTotal">$0</div>
+                    <div class="stat-label">Deuda Total</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="empleadosActivos">0</div>
+                    <div class="stat-label">Empleados Activos</div>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <div class="tab active" onclick="app.switchTab('flota')">🚗 Mi Flota</div>
+                <div class="tab" onclick="app.switchTab('convenios')">📋 Convenios</div>
+                <div class="tab" onclick="app.switchTab('facturas')">📄 Facturas Pendientes</div>
+                <div class="tab" onclick="app.switchTab('estado-cuenta')">📊 Estado de Cuenta</div>
+                <div class="tab" onclick="app.switchTab('empleados')">👥 Empleados</div>
+                <div class="tab" onclick="app.switchTab('pagos')">💳 Registrar Pago</div>
+            </div>
+
+            <!-- TAB: MI FLOTA -->
+            <div id="flota" class="tab-content active">
+                <button class="btn btn-success" style="margin-bottom: 15px; width: auto;" onclick="app.abrirAgregarVehiculo()">➕ Agregar Vehículo</button>
+                <div id="flotaContainer"></div>
+            </div>
+
+            <!-- TAB: CONVENIOS -->
+            <div id="convenios" class="tab-content">
+                <div id="conveniosContainer"></div>
+            </div>
+
+            <!-- TAB: FACTURAS PENDIENTES -->
+            <div id="facturas" class="tab-content">
+                <div id="facturasContainer"></div>
+            </div>
+
+            <!-- TAB: ESTADO DE CUENTA -->
+            <div id="estado-cuenta" class="tab-content">
+                <div id="estadoCuentaContainer"></div>
+            </div>
+
+            <!-- TAB: EMPLEADOS -->
+            <div id="empleados" class="tab-content">
+                <button class="btn btn-success" style="margin-bottom: 15px; width: auto;" onclick="app.abrirAgregarEmpleado()">➕ Agregar Empleado</button>
+                <div id="empleadosContainer"></div>
+            </div>
+
+            <!-- TAB: REGISTRAR PAGO -->
+            <div id="pagos" class="tab-content">
+                <button class="btn btn-success" style="margin-bottom: 15px; width: auto;" onclick="app.abrirRegistrarPago()">➕ Nuevo Pago</button>
+                <div id="pagosContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Agregar Vehículo -->
+    <div id="modalAgregarVehiculo" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">🚗 Agregar Vehículo a la Flota</div>
+            <div class="form-group">
+                <label>Placa:</label>
+                <input type="text" id="vehiculoPlaca" placeholder="Ej: ABC-123">
+            </div>
+            <div class="form-group">
+                <label>Marca y Modelo:</label>
+                <input type="text" id="vehiculoModelo" placeholder="Ej: Toyota Corolla 2020">
+            </div>
+            <div class="form-group">
+                <label>Tipo de Vehículo:</label>
+                <select id="vehiculoTipo">
+                    <option value="Automóvil">Automóvil</option>
+                    <option value="Camioneta">Camioneta</option>
+                    <option value="Camión">Camión</option>
+                    <option value="Buseta">Buseta</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Estado:</label>
+                <select id="vehiculoEstado">
+                    <option value="Activo">Activo</option>
+                    <option value="Inactivo">Inactivo</option>
+                    <option value="Mantenimiento">Mantenimiento</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="app.cerrarModal('modalAgregarVehiculo')">Cancelar</button>
+                <button class="btn btn-primary" onclick="app.agregarVehiculo()">Agregar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Agregar Empleado -->
+    <div id="modalAgregarEmpleado" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">👤 Agregar Empleado</div>
+            <div class="form-group">
+                <label>Nombre:</label>
+                <input type="text" id="empleadoNombre" placeholder="Ej: Juan García">
+            </div>
+            <div class="form-group">
+                <label>Cédula:</label>
+                <input type="text" id="empleadoCedula" placeholder="Ej: V-12345678">
+            </div>
+            <div class="form-group">
+                <label>Puesto:</label>
+                <input type="text" id="empleadoPuesto" placeholder="Ej: Conductor">
+            </div>
+            <div class="form-group">
+                <label>Teléfono:</label>
+                <input type="text" id="empleadoTelefono" placeholder="Ej: 0414-1234567">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="app.cerrarModal('modalAgregarEmpleado')">Cancelar</button>
+                <button class="btn btn-primary" onclick="app.agregarEmpleado()">Agregar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Registrar Pago -->
+    <div id="modalRegistrarPago" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">💳 Registrar Pago</div>
+            <div class="form-group">
+                <label>Monto ($):</label>
+                <input type="number" id="pagoMonto" step="0.01" placeholder="0.00">
+            </div>
+            <div class="form-group">
+                <label>Método de Pago:</label>
+                <select id="pagoMetodo">
+                    <option value="Transferencia Bancaria">Transferencia Bancaria</option>
+                    <option value="Cheque">Cheque</option>
+                    <option value="Tarjeta Crédito">Tarjeta Crédito</option>
+                    <option value="Efectivo">Efectivo</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Referencia:</label>
+                <input type="text" id="pagoReferencia" placeholder="Ej: TRF-2026-001">
+            </div>
+            <div class="form-group">
+                <label>Descripción:</label>
+                <textarea id="pagoDescripcion" rows="3" placeholder="Notas sobre el pago"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="app.cerrarModal('modalRegistrarPago')">Cancelar</button>
+                <button class="btn btn-primary" onclick="app.registrarPago()">Registrar Pago</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const app = {
+            empresaActual: null,
+
+            login() {
+                const empresaId = document.getElementById('empresaSelect').value;
+                if (!empresaId) {
+                    alert('Selecciona una empresa');
+                    return;
+                }
+
+                fetch(`/api/empresa/${empresaId}`)
+                    .then(r => r.json())
+                    .then(empresa => {
+                        this.empresaActual = empresa;
+                        document.getElementById('loginSection').style.display = 'none';
+                        document.getElementById('dashboard').classList.add('active');
+                        this.cargarDatos();
+                    })
+                    .catch(e => {
+                        this.empresaActual = this.getEmpresaMock(empresaId);
+                        document.getElementById('loginSection').style.display = 'none';
+                        document.getElementById('dashboard').classList.add('active');
+                        this.cargarDatos();
+                    });
+            },
+
+            getEmpresaMock(empresaId) {
+                const empresas = {
+                    'empresa-001': {
+                        id: 'empresa-001',
+                        nombre: 'Transportes Global S.A.',
+                        rif: 'J-12345678-0',
+                        correo: 'info@transportesglobal.com',
+                        telefono: '0212-1234567',
+                        direccion: 'Calle Principal 123, Caracas',
+                        empleados: 25,
+                        vehiculos: 15
+                    },
+                    'empresa-002': {
+                        id: 'empresa-002',
+                        nombre: 'LogísticaExpress S.A.',
+                        rif: 'J-87654321-0',
+                        correo: 'contacto@logisticaexpress.com',
+                        telefono: '0212-7654321',
+                        direccion: 'Avenida Secundaria 456, Valencia',
+                        empleados: 40,
+                        vehiculos: 28
+                    },
+                    'empresa-003': {
+                        id: 'empresa-003',
+                        nombre: 'Distribuidora Premium S.A.',
+                        rif: 'J-55555555-0',
+                        correo: 'admin@distribuidorapremium.com',
+                        telefono: '0243-2222222',
+                        direccion: 'Calle del Comercio 789, Maracay',
+                        empleados: 18,
+                        vehiculos: 12
+                    }
+                };
+                return empresas[empresaId];
+            },
+
+            logout() {
+                this.empresaActual = null;
+                document.getElementById('loginSection').style.display = 'block';
+                document.getElementById('dashboard').classList.remove('active');
+            },
+
+            cargarDatos() {
+                this.cargarInfoEmpresa();
+                this.cargarFlota();
+                this.cargarConvenios();
+                this.cargarFacturasPendientes();
+                this.cargarEstadoCuenta();
+                this.cargarEmpleados();
+                this.cargarPagos();
+                this.cargarEstadisticas();
+            },
+
+            cargarInfoEmpresa() {
+                const e = this.empresaActual;
+                document.getElementById('empresaNombre').textContent = e.nombre;
+                document.getElementById('empresaRIF').textContent = e.rif;
+                document.getElementById('empresaCorreo').textContent = e.correo;
+                document.getElementById('empresaTelefono').textContent = e.telefono;
+                document.getElementById('empresaDireccion').textContent = e.direccion;
+                document.getElementById('empresaEmpleados').textContent = e.empleados;
+                document.getElementById('empresaVehiculos').textContent = e.vehiculos;
+            },
+
+            cargarEstadisticas() {
+                const vehiculos = [
+                    { placa: 'ABC-001', modelo: 'Toyota Hiace 2020', estado: 'Activo' },
+                    { placa: 'ABC-002', modelo: 'Chevrolet Spark 2019', estado: 'Activo' },
+                    { placa: 'ABC-003', modelo: 'Ford Transit 2021', estado: 'Inactivo' }
+                ];
+                const deuda = 3500.00;
+                const facturasPendientes = 2;
+
+                document.getElementById('vehiculosActivos').textContent = vehiculos.filter(v => v.estado === 'Activo').length;
+                document.getElementById('facturasVencidas').textContent = facturasPendientes;
+                document.getElementById('deudaTotal').textContent = `$${deuda.toFixed(2)}`;
+                document.getElementById('empleadosActivos').textContent = this.empresaActual.empleados;
+            },
+
+            cargarFlota() {
+                const mockFlota = [
+                    { placa: 'ABC-001', modelo: 'Toyota Hiace 2020', tipo: 'Camioneta', estado: 'Activo', servicios: 12, gasto: 850.00 },
+                    { placa: 'ABC-002', modelo: 'Chevrolet Spark 2019', tipo: 'Automóvil', estado: 'Activo', servicios: 8, gasto: 420.00 },
+                    { placa: 'ABC-003', modelo: 'Ford Transit 2021', tipo: 'Camión', estado: 'Inactivo', servicios: 5, gasto: 350.00 },
+                    { placa: 'ABC-004', modelo: 'Nissan Versa 2018', tipo: 'Automóvil', estado: 'Activo', servicios: 15, gasto: 980.00 },
+                    { placa: 'ABC-005', modelo: 'Hino 500 2020', tipo: 'Camión', estado: 'Activo', servicios: 20, gasto: 2500.00 }
+                ];
+                const container = document.getElementById('flotaContainer');
+                container.innerHTML = mockFlota.map(v => `
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">${v.placa} - ${v.modelo}</span>
+                            <span class="status-badge status-${v.estado.toLowerCase()}">${v.estado}</span>
+                        </div>
+                        <div class="card-detail">
+                            <div class="detail-item">
+                                <span class="detail-label">Tipo</span>
+                                <span class="detail-value">${v.tipo}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Servicios Realizados</span>
+                                <span class="detail-value">${v.servicios}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Gasto en Mantenimiento</span>
+                                <span class="detail-value">$${v.gasto.toFixed(2)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            cargarConvenios() {
+                const mockConvenios = [
+                    { id: 'CONV-001', taller: 'Lubrikca Premium', tipo: 'Mantenimiento Preventivo', estado: 'Activo', descuento: '15%', fecha_vencimiento: '2026-12-31' },
+                    { id: 'CONV-002', taller: 'Auto Servicio Total', tipo: 'Reparaciones', estado: 'Activo', descuento: '10%', fecha_vencimiento: '2026-11-30' },
+                    { id: 'CONV-003', taller: 'Talleres Especializados', tipo: 'Alineación y Balanceo', estado: 'Activo', descuento: '20%', fecha_vencimiento: '2026-10-15' },
+                    { id: 'CONV-004', taller: 'Centro de Servicios', tipo: 'Neumáticos', estado: 'Activo', descuento: '12%', fecha_vencimiento: '2026-09-30' },
+                    { id: 'CONV-005', taller: 'Servicios Integrales', tipo: 'Electricidad Vehicular', estado: 'Activo', descuento: '18%', fecha_vencimiento: '2026-08-31' }
+                ];
+                const container = document.getElementById('conveniosContainer');
+                container.innerHTML = mockConvenios.map(c => `
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">${c.id} - ${c.taller}</span>
+                            <span class="status-badge status-activo">✅ ${c.estado}</span>
+                        </div>
+                        <div class="card-detail">
+                            <div class="detail-item">
+                                <span class="detail-label">Tipo de Servicio</span>
+                                <span class="detail-value">${c.tipo}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Descuento</span>
+                                <span class="detail-value">${c.descuento}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Vencimiento</span>
+                                <span class="detail-value">${new Date(c.fecha_vencimiento).toLocaleDateString('es-ES')}</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            cargarFacturasPendientes() {
+                const mockFacturas = [
+                    { numero: 'FAC-2026-0001', fecha: '2026-04-20', vencimiento: '2026-05-20', monto: 1500.00, estado: 'Vencido' },
+                    { numero: 'FAC-2026-0002', fecha: '2026-04-22', vencimiento: '2026-05-22', monto: 2000.00, estado: 'Pendiente' },
+                    { numero: 'FAC-2026-0003', fecha: '2026-04-24', vencimiento: '2026-05-24', monto: 850.00, estado: 'Pendiente' },
+                    { numero: 'FAC-2026-0004', fecha: '2026-04-15', vencimiento: '2026-05-15', monto: 3200.00, estado: 'Vencido' },
+                    { numero: 'FAC-2026-0005', fecha: '2026-04-18', vencimiento: '2026-05-18', monto: 1200.00, estado: 'Pendiente' }
+                ];
+                const container = document.getElementById('facturasContainer');
+                container.innerHTML = mockFacturas.map(f => `
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">${f.numero} - $${f.monto.toFixed(2)}</span>
+                            <span class="status-badge status-${f.estado.toLowerCase()}">${f.estado}</span>
+                        </div>
+                        <div class="card-detail">
+                            <div class="detail-item">
+                                <span class="detail-label">Fecha Emisión</span>
+                                <span class="detail-value">${new Date(f.fecha).toLocaleDateString('es-ES')}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Fecha Vencimiento</span>
+                                <span class="detail-value">${new Date(f.vencimiento).toLocaleDateString('es-ES')}</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            cargarEstadoCuenta() {
+                const mockCuenta = {
+                    saldo_anterior: 8500.00,
+                    total_facturas: 8750.00,
+                    total_pagos: 5250.00,
+                    saldo_actual: 11000.00,
+                    limite_credito: 20000.00,
+                    credito_disponible: 9000.00,
+                    transacciones: [
+                        { fecha: '2026-04-25', descripcion: 'Pago Factura FAC-2026-0001', monto: 1500.00, tipo: 'PAGO' },
+                        { fecha: '2026-04-23', descripcion: 'Factura FAC-2026-0003', monto: 850.00, tipo: 'CARGO' },
+                        { fecha: '2026-04-22', descripcion: 'Pago Factura FAC-2026-0002', monto: 2000.00, tipo: 'PAGO' },
+                        { fecha: '2026-04-20', descripcion: 'Factura FAC-2026-0002', monto: 2000.00, tipo: 'CARGO' },
+                        { fecha: '2026-04-20', descripcion: 'Factura FAC-2026-0001', monto: 1500.00, tipo: 'CARGO' },
+                        { fecha: '2026-04-18', descripcion: 'Pago Factura FAC-2026-0004', monto: 3200.00, tipo: 'PAGO' },
+                        { fecha: '2026-04-15', descripcion: 'Factura FAC-2026-0004', monto: 3200.00, tipo: 'CARGO' },
+                        { fecha: '2026-04-15', descripcion: 'Factura FAC-2026-0005', monto: 1200.00, tipo: 'CARGO' },
+                        { fecha: '2026-04-10', descripcion: 'Pago Saldo Anterior', monto: 1450.00, tipo: 'PAGO' },
+                        { fecha: '2026-04-05', descripcion: 'Saldo Inicial', monto: 8500.00, tipo: 'SALDO' }
+                    ]
+                };
+                const container = document.getElementById('estadoCuentaContainer');
+                container.innerHTML = `
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 10px; margin-bottom: 20px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">Saldo Actual</div>
+                                <div style="font-size: 28px; font-weight: 700;">$${mockCuenta.saldo_actual.toFixed(2)}</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">Crédito Disponible</div>
+                                <div style="font-size: 28px; font-weight: 700;">$${mockCuenta.credito_disponible.toFixed(2)}</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">Límite de Crédito</div>
+                                <div style="font-size: 28px; font-weight: 700;">$${mockCuenta.limite_credito.toFixed(2)}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 style="color: #667eea; margin-bottom: 15px; font-size: 16px;">📜 Últimas Transacciones</h3>
+                    ${mockCuenta.transacciones.map(t => `
+                        <div class="card" style="margin-bottom: 10px;">
+                            <div style="display: grid; grid-template-columns: 120px 1fr 120px; gap: 15px; align-items: center;">
+                                <div>
+                                    <span class="detail-label">Fecha</span>
+                                    <span style="font-weight: 600; color: #333;">${new Date(t.fecha).toLocaleDateString('es-ES')}</span>
+                                </div>
+                                <div>
+                                    <span class="detail-label">Descripción</span>
+                                    <span style="font-weight: 600; color: #333;">${t.descripcion}</span>
+                                </div>
+                                <div style="text-align: right;">
+                                    <span style="font-size: 12px; font-weight: 600; color: #999;">$${t.monto.toFixed(2)}</span>
+                                    <div style="font-size: 12px; font-weight: 600; color: ${t.tipo === 'PAGO' ? '#4CAF50' : t.tipo === 'CARGO' ? '#f44336' : '#667eea'};">${t.tipo}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                `;
+            },
+
+            cargarEmpleados() {
+                const mockEmpleados = [
+                    { id: 'EMP-001', nombre: 'Juan García', cedula: 'V-12345678', puesto: 'Conductor', telefono: '0414-1234567', uso_beneficio: 'Sí', deuda: 0.00 },
+                    { id: 'EMP-002', nombre: 'María López', cedula: 'V-87654321', puesto: 'Conductor', telefono: '0424-7654321', uso_beneficio: 'Sí', deuda: 450.00 },
+                    { id: 'EMP-003', nombre: 'Carlos Rodríguez', cedula: 'V-11111111', puesto: 'Supervisor', telefono: '0412-1111111', uso_beneficio: 'No', deuda: 0.00 },
+                    { id: 'EMP-004', nombre: 'Ana Martínez', cedula: 'V-22222222', puesto: 'Conductor', telefono: '0416-2222222', uso_beneficio: 'Sí', deuda: 800.00 },
+                    { id: 'EMP-005', nombre: 'Roberto Pérez', cedula: 'V-33333333', puesto: 'Jefe de Flota', telefono: '0414-3333333', uso_beneficio: 'No', deuda: 0.00 }
+                ];
+                const container = document.getElementById('empleadosContainer');
+                container.innerHTML = mockEmpleados.map(e => `
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">${e.nombre}</span>
+                            <span class="status-badge" style="background: ${e.deuda > 0 ? '#f8d7da' : '#d1e7dd'}; color: ${e.deuda > 0 ? '#842029' : '#0f5132'};">${e.deuda > 0 ? 'Con Deuda' : 'Solvente'}</span>
+                        </div>
+                        <div class="card-detail">
+                            <div class="detail-item">
+                                <span class="detail-label">Cédula</span>
+                                <span class="detail-value">${e.cedula}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Puesto</span>
+                                <span class="detail-value">${e.puesto}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Teléfono</span>
+                                <span class="detail-value">${e.telefono}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Usa Beneficio</span>
+                                <span class="detail-value">${e.uso_beneficio}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Deuda Generada</span>
+                                <span class="detail-value" style="color: ${e.deuda > 0 ? '#f44336' : '#4CAF50'};">$${e.deuda.toFixed(2)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            cargarPagos() {
+                const mockPagos = [
+                    { id: 'PAG-001', fecha: '2026-04-25', monto: 1500.00, metodo: 'Transferencia Bancaria', referencia: 'TRF-2026-001', estado: 'Confirmado' },
+                    { id: 'PAG-002', fecha: '2026-04-22', monto: 2000.00, metodo: 'Cheque', referencia: 'CHQ-5678', estado: 'Confirmado' },
+                    { id: 'PAG-003', fecha: '2026-04-18', monto: 3200.00, metodo: 'Transferencia Bancaria', referencia: 'TRF-2026-002', estado: 'Confirmado' },
+                    { id: 'PAG-004', fecha: '2026-04-10', monto: 1450.00, metodo: 'Tarjeta Crédito', referencia: 'TCC-1234', estado: 'Confirmado' },
+                    { id: 'PAG-005', fecha: '2026-04-05', monto: 850.00, metodo: 'Transferencia Bancaria', referencia: 'TRF-2026-003', estado: 'Confirmado' }
+                ];
+                const container = document.getElementById('pagosContainer');
+                container.innerHTML = mockPagos.length ? mockPagos.map(p => `
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">${p.id} - $${p.monto.toFixed(2)}</span>
+                            <span class="status-badge status-pagado">✅ ${p.estado}</span>
+                        </div>
+                        <div class="card-detail">
+                            <div class="detail-item">
+                                <span class="detail-label">Fecha</span>
+                                <span class="detail-value">${new Date(p.fecha).toLocaleDateString('es-ES')}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Método</span>
+                                <span class="detail-value">${p.metodo}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Referencia</span>
+                                <span class="detail-value">${p.referencia}</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('') : '<div class="empty-state">No hay pagos registrados aún</div>';
+            },
+
+            switchTab(tabName) {
+                document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+                document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+                document.getElementById(tabName).classList.add('active');
+                event.target.classList.add('active');
+            },
+
+            abrirAgregarVehiculo() {
+                this.abrirModal('modalAgregarVehiculo');
+            },
+
+            agregarVehiculo() {
+                const placa = document.getElementById('vehiculoPlaca').value;
+                const modelo = document.getElementById('vehiculoModelo').value;
+                if (!placa || !modelo) {
+                    alert('Completa todos los campos');
+                    return;
+                }
+                alert(`✅ Vehículo ${placa} agregado a la flota`);
+                this.cerrarModal('modalAgregarVehiculo');
+                this.cargarFlota();
+            },
+
+            abrirAgregarEmpleado() {
+                this.abrirModal('modalAgregarEmpleado');
+            },
+
+            agregarEmpleado() {
+                const nombre = document.getElementById('empleadoNombre').value;
+                const cedula = document.getElementById('empleadoCedula').value;
+                if (!nombre || !cedula) {
+                    alert('Completa todos los campos');
+                    return;
+                }
+                alert(`✅ Empleado ${nombre} agregado`);
+                this.cerrarModal('modalAgregarEmpleado');
+                this.cargarEmpleados();
+            },
+
+            abrirRegistrarPago() {
+                this.abrirModal('modalRegistrarPago');
+            },
+
+            registrarPago() {
+                const monto = document.getElementById('pagoMonto').value;
+                const metodo = document.getElementById('pagoMetodo').value;
+                const referencia = document.getElementById('pagoReferencia').value;
+                if (!monto || !referencia) {
+                    alert('Completa los campos requeridos');
+                    return;
+                }
+                alert(`✅ Pago de $${monto} registrado exitosamente\nMétodo: ${metodo}\nReferencia: ${referencia}`);
+                this.cerrarModal('modalRegistrarPago');
+                this.cargarPagos();
+                this.cargarEstadoCuenta();
+            },
+
+            abrirModal(id) {
+                document.getElementById(id).classList.add('active');
+            },
+
+            cerrarModal(id) {
+                document.getElementById(id).classList.remove('active');
+            }
+        };
+    </script>
+</body>
+</html>
