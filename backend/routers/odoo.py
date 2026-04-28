@@ -330,3 +330,234 @@ def get_payments(partner_id: int = None):
             "status": "error",
             "detail": str(e)
         }
+
+@router.get("/products")
+def get_products(limit: int = 50):
+    """Obtener productos de Odoo"""
+    try:
+        uid = call_odoo_jsonrpc(
+            "call",
+            {
+                "service": "common",
+                "method": "authenticate",
+                "args": [ODOO_DB, ODOO_USER, ODOO_API_TOKEN, {}]
+            }
+        )
+
+        if not uid:
+            raise Exception("Autenticación fallida")
+
+        products = call_odoo_jsonrpc(
+            "call",
+            {
+                "service": "object",
+                "method": "execute",
+                "args": [
+                    ODOO_DB,
+                    uid,
+                    ODOO_API_TOKEN,
+                    "product.product",
+                    "search_read",
+                    [],
+                    ["id", "name", "default_code", "list_price", "standard_price", "qty_available", "categ_id"],
+                    limit
+                ]
+            }
+        )
+
+        return {
+            "products": products,
+            "count": len(products),
+            "status": "success"
+        }
+    except Exception as e:
+        return {
+            "products": [],
+            "count": 0,
+            "status": "error",
+            "detail": str(e)
+        }
+
+@router.get("/invoices")
+def get_invoices(limit: int = 50):
+    """Obtener facturas (account.invoice/account.move) de Odoo"""
+    try:
+        uid = call_odoo_jsonrpc(
+            "call",
+            {
+                "service": "common",
+                "method": "authenticate",
+                "args": [ODOO_DB, ODOO_USER, ODOO_API_TOKEN, {}]
+            }
+        )
+
+        if not uid:
+            raise Exception("Autenticación fallida")
+
+        # En Odoo 14+, las facturas están en account.move con type out_invoice/in_invoice
+        invoices = call_odoo_jsonrpc(
+            "call",
+            {
+                "service": "object",
+                "method": "execute",
+                "args": [
+                    ODOO_DB,
+                    uid,
+                    ODOO_API_TOKEN,
+                    "account.move",
+                    "search_read",
+                    [["move_type", "in", ["out_invoice", "in_invoice"]]],
+                    ["id", "name", "partner_id", "date", "invoice_date", "amount_total", "amount_untaxed",
+                     "amount_tax", "payment_state", "state", "move_type"],
+                    limit
+                ]
+            }
+        )
+
+        return {
+            "invoices": invoices,
+            "count": len(invoices),
+            "status": "success"
+        }
+    except Exception as e:
+        return {
+            "invoices": [],
+            "count": 0,
+            "status": "error",
+            "detail": str(e)
+        }
+
+@router.get("/sales-orders-all")
+def get_all_sales_orders(limit: int = 50):
+    """Obtener todas las sales.orders"""
+    try:
+        uid = call_odoo_jsonrpc(
+            "call",
+            {
+                "service": "common",
+                "method": "authenticate",
+                "args": [ODOO_DB, ODOO_USER, ODOO_API_TOKEN, {}]
+            }
+        )
+
+        if not uid:
+            raise Exception("Autenticación fallida")
+
+        orders = call_odoo_jsonrpc(
+            "call",
+            {
+                "service": "object",
+                "method": "execute",
+                "args": [
+                    ODOO_DB,
+                    uid,
+                    ODOO_API_TOKEN,
+                    "sale.order",
+                    "search_read",
+                    [],
+                    ["id", "name", "partner_id", "date_order", "amount_total", "amount_untaxed", "state", "order_line"],
+                    limit
+                ]
+            }
+        )
+
+        return {
+            "orders": orders,
+            "count": len(orders),
+            "status": "success"
+        }
+    except Exception as e:
+        return {
+            "orders": [],
+            "count": 0,
+            "status": "error",
+            "detail": str(e)
+        }
+
+@router.get("/sales-order/{order_id}")
+def get_sales_order_detail(order_id: int):
+    """Obtener detalles de una sales.order incluyendo líneas"""
+    try:
+        uid = call_odoo_jsonrpc(
+            "call",
+            {
+                "service": "common",
+                "method": "authenticate",
+                "args": [ODOO_DB, ODOO_USER, ODOO_API_TOKEN, {}]
+            }
+        )
+
+        if not uid:
+            raise Exception("Autenticación fallida")
+
+        # Obtener orden
+        order = call_odoo_jsonrpc(
+            "call",
+            {
+                "service": "object",
+                "method": "execute",
+                "args": [
+                    ODOO_DB,
+                    uid,
+                    ODOO_API_TOKEN,
+                    "sale.order",
+                    "read",
+                    [order_id],
+                    ["id", "name", "partner_id", "date_order", "amount_total", "amount_untaxed",
+                     "state", "order_line", "client_order_ref", "confirmation_date"]
+                ]
+            }
+        )
+
+        order_lines = []
+        if order and order[0].get("order_line"):
+            # Obtener detalles de líneas
+            order_lines = call_odoo_jsonrpc(
+                "call",
+                {
+                    "service": "object",
+                    "method": "execute",
+                    "args": [
+                        ODOO_DB,
+                        uid,
+                        ODOO_API_TOKEN,
+                        "sale.order.line",
+                        "read",
+                        order[0]["order_line"],
+                        ["id", "name", "product_id", "product_qty", "price_unit", "price_subtotal", "tax_id"]
+                    ]
+                }
+            )
+
+        return {
+            "order": order[0] if order else None,
+            "lines": order_lines,
+            "status": "success"
+        }
+    except Exception as e:
+        return {
+            "order": None,
+            "lines": [],
+            "status": "error",
+            "detail": str(e)
+        }
+
+@router.post("/link-invoice-to-order")
+def link_invoice_to_order(data: dict):
+    """Crear relación entre factura y sales order en el sistema"""
+    try:
+        invoice_id = data.get("invoice_id")
+        order_id = data.get("order_id")
+        amount = data.get("amount", 0)
+
+        # Esto sería para crear un registro de factoring en la app
+        # Por ahora retornamos el enlace
+        return {
+            "status": "success",
+            "invoice_id": invoice_id,
+            "order_id": order_id,
+            "amount": amount,
+            "message": "Factura vinculada a orden"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

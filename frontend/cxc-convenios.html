@@ -531,10 +531,14 @@
 </div>
 
 <script>
-  // Estado global
-  let odooPartners = []; // Almacenar partners de Odoo
+  // Estado global - Datos reales de Odoo
+  let odooPartners = [];
+  let odooInvoices = [];
+  let odooPayments = [];
+  let odooOrders = [];
+  let odooProducts = [];
 
-  // Mock Data
+  // Mock Data (fallback si Odoo no está disponible)
   const mockData = {
     facturas: [
       { id: 'FAC-2026-001', taller: 'Lubrikca Premium', cliente: 'Juan García', monto: 1500, pagado: 500, fecha: '2026-04-15', vencimiento: '2026-05-15', estado: 'parcial' },
@@ -599,59 +603,140 @@
     else if(viewName === 'cotizaciones') loadCotizaciones();
   }
 
-  function loadDashboard() {
-    const totalFacturas = mockData.facturas.length;
-    const saldoPendiente = mockData.facturas.reduce((sum, f) => sum + (f.monto - f.pagado), 0);
-    const pagosRecibidos = mockData.pagos.length;
+  async function loadDashboard() {
+    try {
+      // Cargar datos reales de Odoo
+      const invoicesRes = await fetch('/api/odoo/invoices?limit=100');
+      if(invoicesRes.ok) {
+        odooInvoices = (await invoicesRes.json()).invoices || [];
+      }
+
+      const paymentsRes = await fetch('/api/odoo/payments');
+      if(paymentsRes.ok) {
+        odooPayments = (await paymentsRes.json()).payments || [];
+      }
+
+      const ordersRes = await fetch('/api/odoo/sales-orders-all?limit=100');
+      if(ordersRes.ok) {
+        odooOrders = (await ordersRes.json()).orders || [];
+      }
+    } catch(e) {
+      console.log('Usando mock data para dashboard');
+    }
+
+    // Usar datos reales de Odoo si disponibles, sino mock data
+    const facturas = odooInvoices.length > 0 ? odooInvoices : mockData.facturas;
+    const pagos = odooPayments.length > 0 ? odooPayments : mockData.pagos;
+    const ordenes = odooOrders.length > 0 ? odooOrders : mockData.ordenes;
+
+    const totalFacturas = facturas.length;
+    const saldoPendiente = facturas.reduce((sum, f) => {
+      if(f.amount_total && f.amount_untaxed) {
+        return sum + (f.amount_total - (f.payment_state === 'paid' ? f.amount_total : 0));
+      }
+      return sum + ((f.monto || 0) - (f.pagado || 0));
+    }, 0);
+
+    const pagosRecibidos = pagos.length;
     const ncEmitidas = mockData.notas.length;
-    const pedidosActivos = mockData.pedidos.filter(p => p.estado !== 'Enviado').length;
+    const pedidosActivos = ordenes.filter(o => o.state && o.state !== 'done' && o.state !== 'cancel').length;
     const cotizacionesPendientes = mockData.cotizaciones.filter(c => c.estadoOdoo === 'Enviada').length;
 
     document.getElementById('d-facturas-compradas').textContent = totalFacturas;
-    document.getElementById('d-saldo-pendiente').textContent = '$' + saldoPendiente.toLocaleString();
+    document.getElementById('d-saldo-pendiente').textContent = '$' + saldoPendiente.toLocaleString('es-ES', {maximumFractionDigits: 2});
     document.getElementById('d-pagos-recibidos').textContent = pagosRecibidos;
     document.getElementById('d-nc-emitidas').textContent = ncEmitidas;
     document.getElementById('d-pedidos-activos').textContent = pedidosActivos;
     document.getElementById('d-cotizaciones-pendientes').textContent = cotizacionesPendientes;
   }
 
-  function loadFacturas() {
+  async function loadFacturas() {
+    try {
+      const response = await fetch('/api/odoo/invoices?limit=100');
+      if(response.ok) {
+        odooInvoices = (await response.json()).invoices || [];
+      }
+    } catch(e) {
+      console.log('Usando mock data para facturas');
+    }
+
+    const facturas = odooInvoices.length > 0 ? odooInvoices : mockData.facturas;
     const tabla = document.getElementById('facturas-tabla');
-    tabla.innerHTML = mockData.facturas.map(f => `
-      <tr>
-        <td>${f.id}</td>
-        <td>${f.taller}</td>
-        <td>${f.cliente}</td>
-        <td>$${f.monto.toLocaleString()}</td>
-        <td>$${f.pagado.toLocaleString()}</td>
-        <td>$${(f.monto - f.pagado).toLocaleString()}</td>
-        <td>${f.fecha}</td>
-        <td>${f.vencimiento}</td>
-        <td><span class="badge b-${f.estado}">${f.estado.toUpperCase()}</span></td>
-        <td><button class="btn btn-sm btn-primary" onclick="showFacturaDetail('${f.id}')">Ver</button></td>
-      </tr>
-    `).join('');
+
+    tabla.innerHTML = facturas.map(f => {
+      const isOdoo = f.amount_total !== undefined;
+      const id = isOdoo ? f.id : f.id;
+      const nombre = isOdoo ? f.name : f.id;
+      const monto = isOdoo ? f.amount_total : f.monto;
+      const pagado = isOdoo ? (f.payment_state === 'paid' ? monto : 0) : f.pagado;
+      const saldo = monto - pagado;
+      const fecha = isOdoo ? (f.invoice_date || f.date) : f.fecha;
+      const estado = isOdoo ? (f.payment_state === 'paid' ? 'pagada' : f.payment_state === 'partial' ? 'parcial' : 'pendiente') : f.estado;
+      const partner = isOdoo ? (f.partner_id ? (typeof f.partner_id === 'object' ? f.partner_id[1] : f.partner_id) : 'N/A') : f.taller;
+
+      return `
+        <tr>
+          <td><strong>${nombre}</strong></td>
+          <td>${partner}</td>
+          <td>Odoo</td>
+          <td>$${monto.toLocaleString('es-ES', {maximumFractionDigits: 2})}</td>
+          <td>$${pagado.toLocaleString('es-ES', {maximumFractionDigits: 2})}</td>
+          <td>$${saldo.toLocaleString('es-ES', {maximumFractionDigits: 2})}</td>
+          <td>${fecha}</td>
+          <td>${fecha}</td>
+          <td><span class="badge b-${estado}">${estado.toUpperCase()}</span></td>
+          <td><a href="${isOdoo ? `https://lixie-dev-lubrika-qa-29822688.dev.odoo.com/web#id=${id}&model=account.move` : '#'}" target="_blank" class="btn btn-sm btn-primary">Ver en Odoo</a></td>
+        </tr>
+      `;
+    }).join('');
   }
 
-  function loadPagos() {
+  async function loadPagos() {
+    try {
+      const response = await fetch('/api/odoo/payments');
+      if(response.ok) {
+        odooPayments = (await response.json()).payments || [];
+      }
+    } catch(e) {
+      console.log('Usando mock data para pagos');
+    }
+
+    const pagos = odooPayments.length > 0 ? odooPayments : mockData.pagos;
     const tabla = document.getElementById('pagos-tabla');
-    tabla.innerHTML = mockData.pagos.map(p => `
-      <tr>
-        <td>${p.fecha}</td>
-        <td>${p.cliente}</td>
-        <td>${p.factura}</td>
-        <td>$${p.monto.toLocaleString()}</td>
-        <td>${p.metodo}</td>
-        <td>${p.referencia}</td>
-        <td><span class="badge b-pagada">${p.estado}</span></td>
-        <td><button class="btn btn-sm btn-primary" onclick="alert('Pago confirmado')">Confirmar</button></td>
-      </tr>
-    `).join('');
+
+    tabla.innerHTML = pagos.map(p => {
+      const isOdoo = p.amount !== undefined;
+      const fecha = isOdoo ? p.date : p.fecha;
+      const monto = isOdoo ? p.amount : p.monto;
+      const partner = isOdoo ? (p.partner_id ? (typeof p.partner_id === 'object' ? p.partner_id[1] : p.partner_id) : 'N/A') : p.cliente;
+      const estado = isOdoo ? p.state : p.estado;
+      const id = isOdoo ? p.id : p.referencia;
+
+      return `
+        <tr>
+          <td>${fecha}</td>
+          <td>${partner}</td>
+          <td>${p.name || 'Payment'}</td>
+          <td>$${monto.toLocaleString('es-ES', {maximumFractionDigits: 2})}</td>
+          <td>Odoo API</td>
+          <td>${id}</td>
+          <td><span class="badge b-pagada">${estado}</span></td>
+          <td><a href="${isOdoo ? `https://lixie-dev-lubrika-qa-29822688.dev.odoo.com/web#id=${p.id}&model=account.payment` : '#'}" target="_blank" class="btn btn-sm btn-primary">Ver en Odoo</a></td>
+        </tr>
+      `;
+    }).join('');
 
     // Llenar select de facturas en modal
     const select = document.getElementById('np-factura');
+    const facturas = odooInvoices.length > 0 ? odooInvoices : mockData.facturas;
     select.innerHTML = '<option value="">-- Seleccionar factura --</option>' +
-      mockData.facturas.map(f => `<option value="${f.id}">${f.id} - ${f.cliente}</option>`).join('');
+      facturas.map(f => {
+        const isOdoo = f.amount_total !== undefined;
+        const id = isOdoo ? f.id : f.id;
+        const nombre = isOdoo ? f.name : f.id;
+        const partner = isOdoo ? (typeof f.partner_id === 'object' ? f.partner_id[1] : f.partner_id) : f.cliente;
+        return `<option value="${id}">${nombre} - ${partner}</option>`;
+      }).join('');
   }
 
   function loadNotas() {
@@ -675,56 +760,142 @@
       mockData.ordenes.map(o => `<option value="${o.id}">${o.id} - ${o.cliente}</option>`).join('');
   }
 
-  function loadOrdenes() {
+  async function loadOrdenes() {
+    try {
+      const response = await fetch('/api/odoo/sales-orders-all?limit=100');
+      if(response.ok) {
+        odooOrders = (await response.json()).orders || [];
+      }
+    } catch(e) {
+      console.log('Usando mock data para órdenes');
+    }
+
+    const ordenes = odooOrders.length > 0 ? odooOrders : mockData.ordenes;
     const tabla = document.getElementById('ordenes-tabla');
-    tabla.innerHTML = mockData.ordenes.map(o => `
-      <tr>
-        <td>${o.id}</td>
-        <td>${o.taller}</td>
-        <td>${o.cliente}</td>
-        <td>$${o.subtotal.toLocaleString()}</td>
-        <td>$${o.impuestos.toLocaleString()}</td>
-        <td>$${o.total.toLocaleString()}</td>
-        <td>${o.fecha}</td>
-        <td><span class="badge b-confirmado">${o.estado}</span></td>
-        <td><button class="btn btn-sm btn-primary" onclick="alert('Orden: ${o.id}')">Ver</button></td>
-      </tr>
-    `).join('');
+
+    tabla.innerHTML = ordenes.map(o => {
+      const isOdoo = o.amount_total !== undefined;
+      const id = isOdoo ? o.id : o.id;
+      const nombre = isOdoo ? o.name : o.id;
+      const partner = isOdoo ? (typeof o.partner_id === 'object' ? o.partner_id[1] : o.partner_id) : o.taller;
+      const subtotal = isOdoo ? o.amount_untaxed : o.subtotal;
+      const impuestos = isOdoo ? (o.amount_total - o.amount_untaxed) : o.impuestos;
+      const total = isOdoo ? o.amount_total : o.total;
+      const fecha = isOdoo ? o.date_order : o.fecha;
+      const estado = isOdoo ? (o.state === 'sale' ? 'Confirmada' : o.state === 'done' ? 'Entregada' : 'Presupuesto') : o.estado;
+
+      return `
+        <tr>
+          <td><strong>${nombre}</strong></td>
+          <td>${partner}</td>
+          <td>Cliente Odoo</td>
+          <td>$${subtotal.toLocaleString('es-ES', {maximumFractionDigits: 2})}</td>
+          <td>$${impuestos.toLocaleString('es-ES', {maximumFractionDigits: 2})}</td>
+          <td>$${total.toLocaleString('es-ES', {maximumFractionDigits: 2})}</td>
+          <td>${fecha}</td>
+          <td><span class="badge b-confirmado">${estado}</span></td>
+          <td><a href="${isOdoo ? `https://lixie-dev-lubrika-qa-29822688.dev.odoo.com/web#id=${id}&model=sale.order` : '#'}" target="_blank" class="btn btn-sm btn-primary">Ver</a></td>
+        </tr>
+      `;
+    }).join('');
+
+    // Llenar select de órdenes en modal de notas de crédito
+    const select = document.getElementById('nc-orden');
+    select.innerHTML = '<option value="">-- Seleccionar orden --</option>' +
+      ordenes.map(o => {
+        const isOdoo = o.amount_total !== undefined;
+        const id = isOdoo ? o.id : o.id;
+        const nombre = isOdoo ? o.name : o.id;
+        const cliente = isOdoo ? (typeof o.partner_id === 'object' ? o.partner_id[1] : o.partner_id) : o.cliente;
+        return `<option value="${id}">${nombre} - ${cliente}</option>`;
+      }).join('');
   }
 
-  function loadPedidos() {
+  async function loadPedidos() {
+    try {
+      const response = await fetch('/api/odoo/sales-orders-all?limit=100');
+      if(response.ok) {
+        odooOrders = (await response.json()).orders || [];
+      }
+    } catch(e) {
+      console.log('Usando mock data para pedidos');
+    }
+
+    const pedidos = odooOrders.length > 0 ? odooOrders : mockData.pedidos;
     const tabla = document.getElementById('pedidos-tabla');
-    tabla.innerHTML = mockData.pedidos.map(p => `
-      <tr>
-        <td>${p.id}</td>
-        <td>${p.solicitante}</td>
-        <td>${p.articulos}</td>
-        <td>$${p.monto.toLocaleString()}</td>
-        <td>${p.fecha}</td>
-        <td><span class="badge b-${p.estado.toLowerCase()}">${p.estado}</span></td>
-        <td><button class="btn btn-sm btn-primary" onclick="openModal('modal-enviar-cotizacion')">Cotizar</button></td>
-      </tr>
-    `).join('');
+
+    tabla.innerHTML = pedidos.map(p => {
+      const isOdoo = p.amount_total !== undefined;
+      const id = isOdoo ? p.id : p.id;
+      const nombre = isOdoo ? p.name : p.id;
+      const solicitante = isOdoo ? (typeof p.partner_id === 'object' ? p.partner_id[1] : p.partner_id) : p.solicitante;
+      const monto = isOdoo ? p.amount_total : p.monto;
+      const fecha = isOdoo ? p.date_order : p.fecha;
+      const estado = isOdoo ? (p.state === 'draft' ? 'Borrador' : p.state === 'sent' ? 'Enviado' : p.state === 'sale' ? 'Confirmado' : 'Completado') : p.estado;
+
+      return `
+        <tr>
+          <td><strong>${nombre}</strong></td>
+          <td>${solicitante}</td>
+          <td>Varios artículos</td>
+          <td>$${monto.toLocaleString('es-ES', {maximumFractionDigits: 2})}</td>
+          <td>${fecha}</td>
+          <td><span class="badge b-${estado.toLowerCase()}">${estado}</span></td>
+          <td><a href="${isOdoo ? `https://lixie-dev-lubrika-qa-29822688.dev.odoo.com/web#id=${id}&model=sale.order` : '#'}" target="_blank" class="btn btn-sm btn-primary">Cotizar</a></td>
+        </tr>
+      `;
+    }).join('');
   }
 
-  function loadCotizaciones() {
+  async function loadCotizaciones() {
+    try {
+      const response = await fetch('/api/odoo/sales-orders-all?limit=100');
+      if(response.ok) {
+        odooOrders = (await response.json()).orders || [];
+      }
+    } catch(e) {
+      console.log('Usando mock data para cotizaciones');
+    }
+
+    const pedidos = odooOrders.length > 0 ? odooOrders : mockData.pedidos;
     const tabla = document.getElementById('cotizaciones-tabla');
-    tabla.innerHTML = mockData.cotizaciones.map(c => `
-      <tr>
-        <td>${c.id}</td>
-        <td>${c.pedido}</td>
-        <td>${c.solicitante}</td>
-        <td>$${c.total.toLocaleString()}</td>
-        <td>${c.fechaEnvio}</td>
-        <td><span class="badge b-${c.estadoOdoo.toLowerCase()}">${c.estadoOdoo}</span></td>
-        <td><button class="btn btn-sm btn-primary" onclick="alert('Cotización: ${c.id}')">Detalles</button></td>
-      </tr>
-    `).join('');
+
+    tabla.innerHTML = pedidos.filter(p => {
+      const isOdoo = p.amount_total !== undefined;
+      return isOdoo ? p.state === 'draft' : p.estado === 'Pendiente';
+    }).map((c, idx) => {
+      const isOdoo = c.amount_total !== undefined;
+      const id = isOdoo ? c.id : c.id;
+      const nombre = isOdoo ? c.name : 'COT-' + idx;
+      const pedido = isOdoo ? c.name : c.id;
+      const solicitante = isOdoo ? (typeof c.partner_id === 'object' ? c.partner_id[1] : c.partner_id) : c.solicitante;
+      const total = isOdoo ? c.amount_total : c.total;
+      const fecha = isOdoo ? c.date_order : c.fechaEnvio;
+      const estado = 'Pendiente';
+
+      return `
+        <tr>
+          <td><strong>${nombre}</strong></td>
+          <td>${pedido}</td>
+          <td>${solicitante}</td>
+          <td>$${total.toLocaleString('es-ES', {maximumFractionDigits: 2})}</td>
+          <td>${fecha}</td>
+          <td><span class="badge b-${estado.toLowerCase()}">${estado}</span></td>
+          <td><a href="${isOdoo ? `https://lixie-dev-lubrika-qa-29822688.dev.odoo.com/web#id=${id}&model=sale.order` : '#'}" target="_blank" class="btn btn-sm btn-primary">Detalles</a></td>
+        </tr>
+      `;
+    }).join('');
 
     // Cargar select de pedidos en modal
     const select = document.getElementById('cot-pedido');
     select.innerHTML = '<option value="">-- Seleccionar pedido --</option>' +
-      mockData.pedidos.map(p => `<option value="${p.id}">${p.id} - ${p.articulos}</option>`).join('');
+      pedidos.map(p => {
+        const isOdoo = p.amount_total !== undefined;
+        const id = isOdoo ? p.id : p.id;
+        const nombre = isOdoo ? p.name : p.id;
+        const desc = isOdoo ? 'Productos Odoo' : p.articulos;
+        return `<option value="${id}">${nombre} - ${desc}</option>`;
+      }).join('');
   }
 
   // Funciones auxiliares
@@ -1088,9 +1259,16 @@
   }
 
   // Inicializar
-  window.onload = () => {
-    loadDashboard();
-    loadPartners(); // Cargar partners de Odoo
+  window.onload = async () => {
+    console.log('Iniciando CxC Convenios Module...');
+
+    // Cargar datos de Odoo en paralelo
+    await Promise.all([
+      loadPartners(),
+      loadDashboard()
+    ]);
+
+    console.log('✓ Módulo CxC cargado correctamente');
   };
 </script>
 </body>
